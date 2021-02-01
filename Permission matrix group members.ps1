@@ -3,18 +3,17 @@
 
 <#
 .SYNOPSIS
-    Get all group members of security groups used in a matrix.
+    Get all AD objects used in a matrix and retrieve the AD object details
 
 .DESCRIPTION
-    - read an .xlsx file that was exported to a folder 
-      read by Cherwell for creating user forms
-    - generate an .xlsx file for each matrix in that file and 
-      create 2 columns 'GroupName' and 'GroupMembers'
-    - send an e-mail to the 'MatrixResponsible' found in the .xlsx file with attachment
+    The script reads a single Excel input file that contains the 
+    SamAccountNames of all  AD objects used in the matrix files. This is the
+    file created by the Permission Matrix script for displaying date in the 
+    Cherwell forms.
 
-    This can be used:
-    - as a scheduled task to run a couple of times a year to inform the user
-    - with different Cherwell input files coming from 'Process Now' , 'NLightly', ...
+    An e-mail is sent to users defined in the field  'MatrixResponsible' with
+    in attachment an overview of all users, groups and group members that have
+    access to the folders.
     
 .PARAMETER Path
     Path to the Excel file containing the matrix information that is used
