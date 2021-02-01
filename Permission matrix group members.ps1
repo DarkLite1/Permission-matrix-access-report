@@ -21,7 +21,8 @@
     for the export to the Cherwell forms.
 
 .PARAMETER MaxThreads
-    How many jobs are allowed to run at once for querying the AD for AD details
+    Quantity of jobs allowed to run at the same time when  querying the 
+    active director for details.
 #>
 
 [CmdLetBinding()]
