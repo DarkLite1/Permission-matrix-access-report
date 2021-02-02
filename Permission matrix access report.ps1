@@ -115,50 +115,12 @@ Process {
         #endregion
     
         #region Get AD object details and AD group members
-        $jobs = $adQueryResults = @()
-
-        $scriptBlock = {
-            Param (
-                $SamAccountName
-            )
-            Try {
-                $adObject = Get-ADObject -Filter 'SamAccountName -eq $SamAccountName'
-
-                if ($adObject.ObjectClass -eq 'group') {
-                    $adGroupMember = Get-ADGroupMember -Identity $adObject -Recursive
-                }
-
-                [PSCustomObject]@{
-                    samAccountName = $SamAccountName
-                    adObject       = $adObject
-                    adGroupMember  = $adGroupMember
-                }
-            }
-            Catch {
-                $errorMessage = $_; $global:error.RemoveAt(0)
-                throw "Failed retrieving details for SamAccountName '$SamAccountName': $errorMessage"
-            }
-        }
-
-        $M = "Retrieve AD details for $($uniqueSamAccountNamesToCheck.Count) unique SamAccountNames"
+        $M = "Retrieve AD object details for $($uniqueSamAccountNamesToCheck.Count) unique SamAccountNames"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
-        ForEach ($samAccountName in $uniqueSamAccountNamesToCheck) {
-            Write-Verbose "Get AD details for SamAccountName '$samAccountName'"
-            $startJobParams = @{
-                scriptBlock  = $scriptBlock
-                ArgumentList = $samAccountName
-            }
-            $jobs += Start-Job @startJobParams
-            Wait-MaxRunningJobsHC -Name $jobs -MaxThreads $MaxThreads
-        }
+        $ADObjectDetails = Get-ADObjectDetailHC -SamAccountName $uniqueSamAccountNamesToCheck
 
-        if ($jobs) {
-            $adQueryResults = $jobs | Wait-Job | Receive-Job
-            Write-Verbose 'Jobs done'
-        }
-
-        $M = 'Retrieved AD details'
+        $M = "Retrieved $($ADObjectDetails.Count) AD object details"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
         #endregion
 
@@ -178,7 +140,7 @@ Process {
                 }).SamAccountName
 
             $adObjectsToExport = foreach ($s in $matrixSamAccountNames) {
-                $adData = $adQueryResults | Where-Object {
+                $adData = $ADObjectDetails | Where-Object {
                     $s -EQ $_.samAccountName }
                 
                 if (-not $adData.adObject) {

@@ -2,7 +2,10 @@
 #Requires -Version 5.1
 
 BeforeAll {
-    $StartJobCommand = Get-Command Start-Job
+    $testModule = 'T:\Test\Brecht\PowerShell\Toolbox.PermissionMatrix\Toolbox.PermissionMatrix.psm1'
+    Remove-Module 'Toolbox.PermissionMatrix' -EA ignore
+    Import-Module $testModule
+
     $importExcel = Get-Command Import-Excel
 
     $testScript = $PSCommandPath.Replace('.Tests.ps1', '.ps1')
@@ -15,9 +18,7 @@ BeforeAll {
     Mock Send-MailHC
     Mock Write-EventLog
     Mock Import-Excel
-    Mock Start-Job -MockWith {
-        & $StartJobCommand -Scriptblock { 1 }
-    }
+    Mock Get-ADObjectDetailHC
 }
 
 Describe 'the mandatory parameters are' {
@@ -61,11 +62,9 @@ Describe 'a terminating error is thrown when' {
                 }
             )
         } -ParameterFilter { $WorksheetName -eq 'FormData' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                throw "Something went wrong"
-            }
-        }  -ParameterFilter { $ArgumentList[0] -eq 'oops' }
+        Mock Get-ADObjectDetailHC {
+            Write-Error "Something went wrong"
+        }
 
         { .$testScript @testParams -EA SilentlyContinue } | 
         Should -Throw -ExpectedMessage "Error after executing the job that retrieves AD object details, no emails are sent: Something went wrong"
@@ -136,106 +135,81 @@ Describe 'when there is no terminating error' {
                 }
             )
         } -ParameterFilter { $WorksheetName -eq 'FormData' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'craig'
-                    adObject       = @{
-                        ObjectClass = 'user'
-                        Name        = 'Craig Daniel' 
+        Mock Get-ADObjectDetailHC {
+            [PSCustomObject]@{
+                samAccountName = 'craig'
+                adObject       = @{
+                    ObjectClass = 'user'
+                    Name        = 'Craig Daniel' 
+                }
+                adGroupMember  = $null
+            }
+            [PSCustomObject]@{
+                samAccountName = 'kirk'
+                adObject       = @{ 
+                    ObjectClass = 'user'
+                    Name        = 'James T. Kirk' 
+                }
+                adGroupMember  = $null
+            }
+            [PSCustomObject]@{
+                samAccountName = 'picard'
+                adObject       = @{ 
+                    ObjectClass = 'user'
+                    Name        = 'Jean Luc Picard' 
+                }
+                adGroupMember  = $null
+            }
+            [PSCustomObject]@{
+                samAccountName = 'group1'
+                adObject       = @{ ObjectClass = 'group'; Name = 'Group1' }
+                adGroupMember  = @(
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Sean Connery'
+                        SamAccountName = 'connery' 
                     }
-                    adGroupMember  = $null
-                }
-            }
-        } -ParameterFilter { $ArgumentList[0] -eq 'craig' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'kirk'
-                    adObject       = @{ 
-                        ObjectClass = 'user'
-                        Name        = 'James T. Kirk' 
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Timothy Dalton'
+                        SamAccountName = 'dalton' 
                     }
-                    adGroupMember  = $null
-                }
-            }
-        } -ParameterFilter { $ArgumentList[0] -eq 'kirk' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'picard'
-                    adObject       = @{ 
-                        ObjectClass = 'user'
-                        Name        = 'Jean Luc Picard' 
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Craig Daniel' 
+                        SamAccountName = 'craig' 
                     }
-                    adGroupMember  = $null
-                }
+                )
             }
-        } -ParameterFilter { $ArgumentList[0] -eq 'picard' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'group1'
-                    adObject       = @{ ObjectClass = 'group'; Name = 'Group1' }
-                    adGroupMember  = @(
-                        @{ 
-                            ObjectClass    = 'user'
-                            Name           = 'Sean Connery'
-                            SamAccountName = 'connery' 
-                        }
-                        @{ 
-                            ObjectClass    = 'user'
-                            Name           = 'Timothy Dalton'
-                            SamAccountName = 'dalton' 
-                        }
-                        @{ 
-                            ObjectClass    = 'user'
-                            Name           = 'Craig Daniel' 
-                            SamAccountName = 'craig' 
-                        }
-                    )
-                }
+            [PSCustomObject]@{
+                samAccountName = 'group2'
+                adObject       = @{ ObjectClass = 'group'; Name = 'Group2' }
+                adGroupMember  = @(
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Chuck Norris'
+                        SamAccountName = 'cnorris' 
+                    }
+                )
             }
-        } -ParameterFilter { $ArgumentList[0] -eq 'group1' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'group2'
-                    adObject       = @{ ObjectClass = 'group'; Name = 'Group2' }
-                    adGroupMember  = @(
-                        @{ 
-                            ObjectClass    = 'user'
-                            Name           = 'Chuck Norris'
-                            SamAccountName = 'cnorris' 
-                        }
-                    )
-                }
+            [PSCustomObject]@{
+                samAccountName = 'group3'
+                adObject       = @{ ObjectClass = 'group'; Name = 'Group3' }
+                adGroupMember  = $null
             }
-        } -ParameterFilter { $ArgumentList[0] -eq 'group2' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'group3'
-                    adObject       = @{ ObjectClass = 'group'; Name = 'Group3' }
-                    adGroupMember  = $null
-                }
+            [PSCustomObject]@{
+                samAccountName = 'group4'
+                adObject       = @{ ObjectClass = 'group'; Name = 'group4' }
+                adGroupMember  = @(
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'khan'
+                        SamAccountName = 'khan' 
+                    }
+                )
             }
-        } -ParameterFilter { $ArgumentList[0] -eq 'group3' }
-        Mock Start-Job -MockWith {
-            & $StartJobCommand -Scriptblock { 
-                [PSCustomObject]@{
-                    samAccountName = 'group4'
-                    adObject       = @{ ObjectClass = 'group'; Name = 'group4' }
-                    adGroupMember  = @(
-                        @{ 
-                            ObjectClass    = 'user'
-                            Name           = 'khan'
-                            SamAccountName = 'khan' 
-                        }
-                    )
-                }
-            }
-        } -ParameterFilter { $ArgumentList[0] -eq 'group4' }
+        }
+        
         .$testScript @testParams
     }
     Context 'the Excel data is imported from worksheet' {
@@ -249,8 +223,7 @@ Describe 'when there is no terminating error' {
             $matrixWithoutResponsible.MatrixFileName | Should -Be 'Team losers'
         }
         It 'not checked for AD details and group members' {
-            Should -Not -Invoke Start-Job -Scope Describe -ParameterFilter { $ArgumentList[0] -eq 'group4' 
-            }
+            Should -Not -Invoke Get-ADObjectDetailHC -Scope Describe -ParameterFilter { $SamAccountName -contains 'group4' }
         }
         It 'not exported to an Excel file in the log folder' {
             $testGetParams = @{
@@ -263,10 +236,16 @@ Describe 'when there is no terminating error' {
         }
     }
     It 'AD details and group members are only retrieved once for each unique SamAccountName' {
-        @( 'craig', 'drNo', 'group1', 'group3',
-            'kirk', 'picard'
-        ) | ForEach-Object {
-            Should -Invoke Start-Job -Times 1 -Exactly -Scope Describe -ParameterFilter { $ArgumentList[0] -eq $_ }
+        foreach ($name in 
+            @( 
+                'craig', 'drNo', 
+                'group1', 'group2', 'group3', 
+                'kirk', 'picard'
+            )
+            ) {
+            Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
+                (($SamAccountName | Where-Object { $_ -eq $name }).count -eq 1)
+            }   
         }
     }
     Context 'an Excel file is created' {
