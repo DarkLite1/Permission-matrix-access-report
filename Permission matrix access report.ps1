@@ -117,29 +117,26 @@ Process {
         #region Get AD object details and AD group members
         $jobs = $adQueryResults = @()
 
-        $startJobParams = @{
-            Init        = { Import-Module Toolbox.ActiveDirectory }
-            ScriptBlock = {
-                Param (
-                    $SamAccountName
-                )
-                Try {
-                    $adObject = Get-ADObject -Filter 'SamAccountName -eq $SamAccountName'
+        $scriptBlock = {
+            Param (
+                $SamAccountName
+            )
+            Try {
+                $adObject = Get-ADObject -Filter 'SamAccountName -eq $SamAccountName'
 
-                    if ($adObject.ObjectClass -eq 'group') {
-                        $adGroupMember = Get-ADGroupMember -Identity $adObject -Recursive
-                    }
+                if ($adObject.ObjectClass -eq 'group') {
+                    $adGroupMember = Get-ADGroupMember -Identity $adObject -Recursive
+                }
 
-                    [PSCustomObject]@{
-                        samAccountName = $SamAccountName
-                        adObject       = $adObject
-                        adGroupMember  = $adGroupMember
-                    }
+                [PSCustomObject]@{
+                    samAccountName = $SamAccountName
+                    adObject       = $adObject
+                    adGroupMember  = $adGroupMember
                 }
-                Catch {
-                    $errorMessage = $_; $global:error.RemoveAt(0)
-                    throw "Failed retrieving details for SamAccountName '$SamAccountName': $errorMessage"
-                }
+            }
+            Catch {
+                $errorMessage = $_; $global:error.RemoveAt(0)
+                throw "Failed retrieving details for SamAccountName '$SamAccountName': $errorMessage"
             }
         }
 
@@ -148,7 +145,11 @@ Process {
             
         ForEach ($samAccountName in $uniqueSamAccountNamesToCheck) {
             Write-Verbose "Get AD details for SamAccountName '$samAccountName'"
-            $jobs += Start-Job @startJobParams -ArgumentList $samAccountName
+            $startJobParams = @{
+                scriptBlock  = $scriptBlock
+                ArgumentList = $samAccountName
+            }
+            $jobs += Start-Job @startJobParams
             Wait-MaxRunningJobsHC -Name $jobs -MaxThreads $MaxThreads
         }
 
