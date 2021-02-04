@@ -1,5 +1,5 @@
 #Requires -Version 5.1
-#Requires -Modules ImportExcel
+#Requires -Modules ImportExcel, Toolbox.PermissionMatrix
 
 <#
 .SYNOPSIS
