@@ -2,10 +2,6 @@
 #Requires -Version 5.1
 
 BeforeAll {
-    $testModule = 'T:\Test\Brecht\PowerShell\Toolbox.PermissionMatrix\Toolbox.PermissionMatrix.psm1'
-    Remove-Module 'Toolbox.PermissionMatrix' -EA ignore
-    Import-Module $testModule
-
     $importExcel = Get-Command Import-Excel
 
     $testScript = $PSCommandPath.Replace('.Tests.ps1', '.ps1')
