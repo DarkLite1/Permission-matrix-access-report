@@ -24,7 +24,7 @@
 Param (
     [Parameter(Mandatory)]
     [string]$Path,
-    [String]$ScriptName = 'Permission matrix access (BNL)',
+    [String]$ScriptName = 'Permission matrix audit report (BNL)',
     [String]$LogFolder = $env:POWERSHELL_LOG_FOLDER ,
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )

@@ -18,7 +18,7 @@ BeforeAll {
 }
 
 Describe 'the mandatory parameters are' {
-    It "<_>" -ForEach @('Path') {
+    It '<_>' -ForEach @('Path') {
         (Get-Command $testScript).Parameters[$_].Attributes.Mandatory | 
         Should -BeTrue
     }
@@ -209,7 +209,7 @@ Describe 'when there is no terminating error' {
         .$testScript @testParams
     }
     Context 'the Excel data is imported from worksheet' {
-        It '<_>' -Foreach @('AdObjectNames', 'FormData') {
+        It '<_>' -ForEach @('AdObjectNames', 'FormData') {
             Should -Invoke Import-Excel -Times 1 -Exactly -Scope Describe -ParameterFilter { $WorksheetName -eq $_ }
         }
     }
@@ -238,7 +238,7 @@ Describe 'when there is no terminating error' {
                 'group1', 'group2', 'group3', 
                 'kirk', 'picard'
             )
-            ) {
+        ) {
             Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
                 (($SamAccountName | Where-Object { $_ -eq $name }).count -eq 1)
             }   
