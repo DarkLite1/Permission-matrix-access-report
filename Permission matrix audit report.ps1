@@ -118,7 +118,11 @@ Process {
         $M = "Retrieve AD object details for $($uniqueSamAccountNamesToCheck.Count) unique SamAccountNames"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
-        $ADObjectDetails = Get-ADObjectDetailHC -SamAccountName $uniqueSamAccountNamesToCheck
+        $getADObjectParams = @{
+            SamAccountName   = $uniqueSamAccountNamesToCheck
+            ADObjectProperty = @('Manager', 'ManagedBy')
+        }
+        $ADObjectDetails = Get-ADObjectDetailHC @getADObjectParams
 
         $M = "Retrieved $($ADObjectDetails.Count) AD object details"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
@@ -140,70 +144,80 @@ Process {
             throw "Error after executing the job that retrieves AD object details, no emails are sent: $($error.Exception.Message -join ', ')"
         }
         #endregion
-            
+    }
+    Catch {
+        Write-Warning $_
+        Write-EventLog @EventErrorParams -Message "FAILURE:`n`n- $_"
+        Write-EventLog @EventEndParams
+        $errorMessage = $_; $global:error.RemoveAt(0); throw $errorMessage
+    }
+}
+
+End {
+    Try {
         #region Create Excel file for each matrix and send mail
         $htmlStyle = @"
-        <style>
-            a {
-                color: black;
-                text-decoration: underline;
-            }
-            a:hover {
-                color: blue;
-            }
-        
-            #matrixTable {
-                border: 1px solid Black;
-                /* padding-bottom: 60px; */
-                /* border-spacing: 0.5em; */
-                border-collapse: separate;
-                border-spacing: 0px 0.6em;
-                /* padding: 10px; */
-                /* width: 600px; */
-            }
-        
-            #matrixTitle {
-                border: none;
-                background-color: lightgrey;
-                text-align: center;
-                padding: 6px;
-            }
-        
-            #matrixHeader {
-                font-weight: normal;
-                letter-spacing: 5pt;
-                font-style: italic;
-            }
-        
-            #matrixFileInfo {
-                font-weight: normal;
-                font-size: 12px;
-                font-style: italic;
-                text-align: center;
-            }
-        
-            <! –– 
-            table tbody tr td a {
-                display: block;
-                width: 100%;
-                height: 100%;
-            }
-            ––> 
-        </style>
+           <style>
+               a {
+                   color: black;
+                   text-decoration: underline;
+               }
+               a:hover {
+                   color: blue;
+               }
+           
+               #matrixTable {
+                   border: 1px solid Black;
+                   /* padding-bottom: 60px; */
+                   /* border-spacing: 0.5em; */
+                   border-collapse: separate;
+                   border-spacing: 0px 0.6em;
+                   /* padding: 10px; */
+                   /* width: 600px; */
+               }
+           
+               #matrixTitle {
+                   border: none;
+                   background-color: lightgrey;
+                   text-align: center;
+                   padding: 6px;
+               }
+           
+               #matrixHeader {
+                   font-weight: normal;
+                   letter-spacing: 5pt;
+                   font-style: italic;
+               }
+           
+               #matrixFileInfo {
+                   font-weight: normal;
+                   font-size: 12px;
+                   font-style: italic;
+                   text-align: center;
+               }
+           
+               <! –– 
+               table tbody tr td a {
+                   display: block;
+                   width: 100%;
+                   height: 100%;
+               }
+               ––> 
+           </style>
 "@
-
+   
         foreach ($matrix in $matrixWithResponsible) {
             $M = "Matrix '$($matrix.MatrixFileName)'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-            
+               
             $matrixSamAccountNames = ($adObjectNames | 
                 Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName }
             ).SamAccountName
-
+   
             $adObjectsToExport = foreach ($s in $matrixSamAccountNames) {
                 $adData = $ADObjectDetails | 
                 Where-Object { $s -EQ $_.samAccountName }
-                
+                   
                 if (-not $adData.adObject) {
                     Write-Warning "SamAccountName '$s' not found in AD"
                 }
@@ -224,39 +238,39 @@ Process {
                     @{Name = 'MemberSamAccountName'; Expression = { $_.SamAccountName } }
                 }
             }
-
+   
             $M = "Created $($adObjectsToExport.Count) AD objects"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
+   
             if ($adObjectsToExport) {
                 #region Create Excel file
                 $excelParams = @{
                     Path               = "$logFile- $($matrix.MatrixFileName).xlsx"
                     AutoSize           = $true
-                    WorksheetName      = 'adObjects'
-                    TableName          = 'adObjects'
+                    WorksheetName      = 'AccessList'
+                    TableName          = 'AccessList'
                     FreezeTopRow       = $true
                     NoNumberConversion = '*'
                 }
-                
+                   
                 $M = "Export $($adObjectsToExport.Count) AD objects to Excel file '$($excelParams.Path)'"
                 Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
-
+   
                 $adObjectsToExport | Export-Excel @excelParams
                 #endregion
-                
+                   
                 #region Send mail to user
                 $uniqueUserCount = (
                     @(($adObjectsToExport.Where( { $_.Type -eq 'user' })).samAccountName) +
                     @(($adObjectsToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) | 
                     Sort-Object -Unique | Where-Object { $_ }
                 ).Count
-
+   
                 $uniqueGroupCount = ($adObjectsToExport.Where( { $_.Type -eq 'group' }) | Select-Object Name -Unique).Count
-
+   
                 $M = "Send mail with $uniqueUserCount unique user accounts and $uniqueGroupCount unique groups"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
+   
                 $mailParams = @{
                     To          = $matrix.MatrixResponsible
                     Bcc         = $ScriptAdmin
@@ -264,45 +278,45 @@ Process {
                     Attachments = $excelParams.Path
                     Message     =
                     "$htmlStyle
-                    <p>Dear matrix responsible</p>
-                    <p>Managing folder access is not always easy. People are joining and leaving the company, moving departments, changing jobs, ... . To facilitate this task we created the 'Permission matrix' script, an automated way to set permissions on files and folders that are shared with colleagues. This allows you to easily manage folder access by filling in an Excel worksheet containing the folder names, the user groups and the corresponding read or write permissions. </p>
-                    <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid. If something needs to be changed, feel free to report this to us by submitting the form `"Request folder/role access`" on the <a href=`"$RequestTicketURL`" target=`"_blank`">IT Self-service Portal</a>.</p>
-
-                    <table id=`"matrixTable`">
-                        <tr>
-                            <th id=`"matrixTitle`" colspan=`"2`"><a href=""$($matrix.MatrixFilePath)"">$($matrix.MatrixFileName).xlsx</a></th>
-                        </tr>
-                        <tr>
-                            <th>Category</th>
-                            <td>$($matrix.MatrixCategoryName)</td>
-                        </tr>
-                        <tr>
-                            <th>Sub category</th>
-                            <td>$($matrix.MatrixSubCategoryName)</td>
-                        </tr>
-                        <tr>
-                            <th>Folder</th>
-                            <td><a href=""$($matrix.MatrixFolderPath)"">$($matrix.MatrixFolderDisplayName)</a></td>
-                        </tr>
-                        <tr>
-                            <th>Responsible</th>
-                            <td>$($matrix.MatrixResponsible -join ', ')</td>
-                        </tr>
-                    </table>
-
-                    <p>Folder access summary:</p>
-                    <table id=`"matrixTable`">
-                        <tr>
-                            <th>Unique users</th>
-                            <td>$uniqueUserCount</td>
-                        </tr>
-                        <tr>
-                            <th>Unique groups</th>
-                            <td>$uniqueGroupCount</td>
-                        </tr>
-                    </table>
-                        
-                    <p><i>* Check the attachment for details</i></p>"
+                       <p>Dear matrix responsible</p>
+                       <p>Managing folder access is not always easy. People are joining and leaving the company, moving departments, changing jobs, ... . To facilitate this task we created the 'Permission matrix' script, an automated way to set permissions on files and folders that are shared with colleagues. This allows you to easily manage folder access by filling in an Excel worksheet containing the folder names, the user groups and the corresponding read or write permissions. </p>
+                       <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid. If something needs to be changed, feel free to report this to us by submitting the form `"Request folder/role access`" on the <a href=`"$RequestTicketURL`" target=`"_blank`">IT Self-service Portal</a>.</p>
+   
+                       <table id=`"matrixTable`">
+                           <tr>
+                               <th id=`"matrixTitle`" colspan=`"2`"><a href=""$($matrix.MatrixFilePath)"">$($matrix.MatrixFileName).xlsx</a></th>
+                           </tr>
+                           <tr>
+                               <th>Category</th>
+                               <td>$($matrix.MatrixCategoryName)</td>
+                           </tr>
+                           <tr>
+                               <th>Sub category</th>
+                               <td>$($matrix.MatrixSubCategoryName)</td>
+                           </tr>
+                           <tr>
+                               <th>Folder</th>
+                               <td><a href=""$($matrix.MatrixFolderPath)"">$($matrix.MatrixFolderDisplayName)</a></td>
+                           </tr>
+                           <tr>
+                               <th>Responsible</th>
+                               <td>$($matrix.MatrixResponsible -join ', ')</td>
+                           </tr>
+                       </table>
+   
+                       <p>Folder access summary:</p>
+                       <table id=`"matrixTable`">
+                           <tr>
+                               <th>Unique users</th>
+                               <td>$uniqueUserCount</td>
+                           </tr>
+                           <tr>
+                               <th>Unique groups</th>
+                               <td>$uniqueGroupCount</td>
+                           </tr>
+                       </table>
+                           
+                       <p><i>* Check the attachment for details</i></p>"
                     LogFolder   = $LogParams.LogFolder
                     Header      = $ScriptName
                     Save        = $LogFile + ' - Mail.html'
