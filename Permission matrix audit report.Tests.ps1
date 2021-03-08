@@ -16,14 +16,12 @@ BeforeAll {
     Mock Import-Excel
     Mock Get-ADObjectDetailHC
 }
-
 Describe 'the mandatory parameters are' {
     It '<_>' -ForEach @('Path') {
         (Get-Command $testScript).Parameters[$_].Attributes.Mandatory | 
         Should -BeTrue
     }
 }
-
 Describe 'a terminating error is thrown when' {
     Context 'the path to the Excel file' {
         It 'is not found' {
@@ -66,7 +64,6 @@ Describe 'a terminating error is thrown when' {
         Should -Throw -ExpectedMessage "Error after executing the job that retrieves AD object details, no emails are sent: Something went wrong"
     }
 }
-
 Describe 'when there is no terminating error' {
     BeforeAll {
         Mock Import-Excel {
