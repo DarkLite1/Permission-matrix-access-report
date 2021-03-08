@@ -358,14 +358,16 @@ Describe 'when there is no terminating error' {
         It 'defined in the FormData worksheet under MatrixResponsible' {
             Should -Invoke Send-MailHC -Times 1 -Exactly -Scope Describe -ParameterFilter {
                 ($To -eq 'm@contoso.com') -and
+                ($Subject -eq 'MI6 007 agents, 3 users, 2 groups') -and
                 ($Attachments -like '*MI6 007 agents.xlsx') -and
                 ($Message -like '*users*3*groups*2*')
             }
             Should -Invoke Send-MailHC -Times 1 -Exactly -Scope Describe -ParameterFilter {
                 ($To -eq 'admiral@contoso.com') -and
+                ($Subject -eq 'Star Trek captains, 3 users, 2 groups') -and
                 ($Attachments -like '*Star Trek captains.xlsx') -and
                 ($Message -like '*users*3*groups*2*')
             }
-        }
+        } -tag test
     }
 }
