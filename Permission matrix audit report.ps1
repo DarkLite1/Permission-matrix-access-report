@@ -25,6 +25,7 @@ Param (
     [Parameter(Mandatory)]
     [string]$Path,
     [String]$ScriptName = 'Permission matrix audit report (BNL)',
+    [String]$RequestTicketURL = 'https://1itsm.grouphc.net/CherwellPortal',
     [String]$LogFolder = $env:POWERSHELL_LOG_FOLDER ,
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
@@ -249,7 +250,7 @@ Process {
                     "$htmlStyle
                     <p>Dear matrix responsible</p>
                     <p>Managing folder access is not always easy. People are joining and leaving the company, moving departments, changing jobs, ... . To facilitate this task we created the 'Permission matrix' script, an automated way to set permissions on files and folders that are shared with colleagues. This allows you to easily manage folder access by filling in an Excel worksheet containing the folder names, the user groups and the corresponding read or write permissions. </p>
-                    <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid. If something needs to be changed, feel free to let us know. We will assist you in bringing your matrix back up-to-date if needed.</p>
+                    <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid. If something needs to be changed, feel free to report this to us by submitting the form `"Request folder/role access`" on the <a href=`"$RequestTicketURL`" target=`"_blank`">IT Self-service Portal</a>.</p>
 
                     <table id=`"matrixTable`">
                         <tr>

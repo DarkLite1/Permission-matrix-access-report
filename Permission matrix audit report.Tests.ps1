@@ -6,9 +6,10 @@ BeforeAll {
 
     $testScript = $PSCommandPath.Replace('.Tests.ps1', '.ps1')
     $testParams = @{
-        Path       = New-Item 'TestDrive:/overview.xlsx' -ItemType File
-        ScriptName = 'Test (Brecht)'
-        LogFolder  = New-Item 'TestDrive:/log' -ItemType Directory
+        Path             = New-Item 'TestDrive:/overview.xlsx' -ItemType File
+        ScriptName       = 'Test (Brecht)'
+        LogFolder        = New-Item 'TestDrive:/log' -ItemType Directory
+        RequestTicketURL = 'https://some-portal-url'
     }
 
     Mock Send-MailHC
@@ -206,7 +207,7 @@ Describe 'when there is no terminating error' {
         .$testScript @testParams
     }
     Context 'the matrix data exported for Cherwell is imported from worksheet' {
-        It '<_>' -ForEach @('AdObjectNames', 'FormData') {
+        It '<_>' -Foreach @('AdObjectNames', 'FormData') {
             Should -Invoke Import-Excel -Times 1 -Exactly -Scope Describe -ParameterFilter { $WorksheetName -eq $_ }
         }
     }
@@ -256,101 +257,111 @@ Describe 'when there is no terminating error' {
             $testLogFiles[0].Name | Should -BeLike '*MI6 007 agents.xlsx'
             $testLogFiles[1].Name | Should -BeLike '*Star Trek captains.xlsx'
         }
-        Context 'with the column' {
+        Context "worksheet 'ADObjects'" {
             BeforeAll {
                 $testImportParams = @{
                     Path          = $testLogFiles[0].FullName
                     WorksheetName = 'ADObjects'
                 }
                 $testExcelFileMatrix1 = & $importExcel @testImportParams 
-                $testExcelFileMatrix1 = & $importExcel @testImportParams 
                 
                 $testImportParams.Path = $testLogFiles[1].FullName
                 $testExcelFileMatrix2 = & $importExcel @testImportParams
             }
-            It 'SamAccountName' {
-                $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].SamAccountName | Should -Be 'craig'
-                $testExcelFileMatrix1[1].SamAccountName | Should -Be 'group1'
-                $testExcelFileMatrix1[2].SamAccountName | Should -Be 'group1'
-                $testExcelFileMatrix1[3].SamAccountName | Should -Be 'group1'
-                $testExcelFileMatrix1[4].SamAccountName | Should -Be 'group3'
+            Context 'column' {
+                It 'SamAccountName' {
+                    $testExcelFileMatrix1 | Should -HaveCount 5
+                    $testExcelFileMatrix1[0].SamAccountName | 
+                    Should -Be 'craig'
+                    $testExcelFileMatrix1[1].SamAccountName | 
+                    Should -Be 'group1'
+                    $testExcelFileMatrix1[2].SamAccountName | 
+                    Should -Be 'group1'
+                    $testExcelFileMatrix1[3].SamAccountName | 
+                    Should -Be 'group1'
+                    $testExcelFileMatrix1[4].SamAccountName | 
+                    Should -Be 'group3'
                 
-                $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].SamAccountName | Should -Be 'kirk'
-                $testExcelFileMatrix2[1].SamAccountName | Should -Be 'picard'
-                $testExcelFileMatrix2[2].SamAccountName | Should -Be 'group2'
-                $testExcelFileMatrix2[3].SamAccountName | Should -Be 'group3'
-            }
-            It 'Name' {
-                $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].Name | Should -Be 'Craig Daniel'
-                $testExcelFileMatrix1[1].Name | Should -Be 'Group1'
-                $testExcelFileMatrix1[2].Name | Should -Be 'Group1'
-                $testExcelFileMatrix1[3].Name | Should -Be 'Group1'
-                $testExcelFileMatrix1[4].Name | Should -Be 'Group3'
+                    $testExcelFileMatrix2 | Should -HaveCount 4
+                    $testExcelFileMatrix2[0].SamAccountName | 
+                    Should -Be 'kirk'
+                    $testExcelFileMatrix2[1].SamAccountName | 
+                    Should -Be 'picard'
+                    $testExcelFileMatrix2[2].SamAccountName | 
+                    Should -Be 'group2'
+                    $testExcelFileMatrix2[3].SamAccountName | 
+                    Should -Be 'group3'
+                }
+                It 'Name' {
+                    $testExcelFileMatrix1 | Should -HaveCount 5
+                    $testExcelFileMatrix1[0].Name | Should -Be 'Craig Daniel'
+                    $testExcelFileMatrix1[1].Name | Should -Be 'Group1'
+                    $testExcelFileMatrix1[2].Name | Should -Be 'Group1'
+                    $testExcelFileMatrix1[3].Name | Should -Be 'Group1'
+                    $testExcelFileMatrix1[4].Name | Should -Be 'Group3'
 
-                $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].Name | Should -Be 'James T. Kirk'
-                $testExcelFileMatrix2[1].Name | Should -Be 'Jean Luc Picard' 
-                $testExcelFileMatrix2[2].Name | Should -Be 'Group2'
-                $testExcelFileMatrix2[3].Name | Should -Be 'Group3'
-            }
-            It 'Type' {
-                $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].Type | Should -Be 'user'
-                $testExcelFileMatrix1[1].Type | Should -Be 'group'
-                $testExcelFileMatrix1[2].Type | Should -Be 'group'
-                $testExcelFileMatrix1[3].Type | Should -Be 'group'
-                $testExcelFileMatrix1[4].Type | Should -Be 'group'
+                    $testExcelFileMatrix2 | Should -HaveCount 4
+                    $testExcelFileMatrix2[0].Name | Should -Be 'James T. Kirk'
+                    $testExcelFileMatrix2[1].Name | Should -Be 'Jean Luc Picard' 
+                    $testExcelFileMatrix2[2].Name | Should -Be 'Group2'
+                    $testExcelFileMatrix2[3].Name | Should -Be 'Group3'
+                }
+                It 'Type' {
+                    $testExcelFileMatrix1 | Should -HaveCount 5
+                    $testExcelFileMatrix1[0].Type | Should -Be 'user'
+                    $testExcelFileMatrix1[1].Type | Should -Be 'group'
+                    $testExcelFileMatrix1[2].Type | Should -Be 'group'
+                    $testExcelFileMatrix1[3].Type | Should -Be 'group'
+                    $testExcelFileMatrix1[4].Type | Should -Be 'group'
 
-                $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].Type | Should -Be 'user'
-                $testExcelFileMatrix2[1].Type | Should -Be 'user'
-                $testExcelFileMatrix2[2].Type | Should -Be 'group'
-                $testExcelFileMatrix2[3].Type | Should -Be 'group'
-            }
-            It 'MemberName' {
-                $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].MemberName | 
-                Should -BeNullOrEmpty
-                $testExcelFileMatrix1[1].MemberName | 
-                Should -Be 'Sean Connery'
-                $testExcelFileMatrix1[2].MemberName | 
-                Should -Be 'Timothy Dalton'
-                $testExcelFileMatrix1[3].MemberName | 
-                Should -Be 'Craig Daniel'
-                $testExcelFileMatrix1[4].MemberName | 
-                Should -BeNullOrEmpty
+                    $testExcelFileMatrix2 | Should -HaveCount 4
+                    $testExcelFileMatrix2[0].Type | Should -Be 'user'
+                    $testExcelFileMatrix2[1].Type | Should -Be 'user'
+                    $testExcelFileMatrix2[2].Type | Should -Be 'group'
+                    $testExcelFileMatrix2[3].Type | Should -Be 'group'
+                }
+                It 'MemberName' {
+                    $testExcelFileMatrix1 | Should -HaveCount 5
+                    $testExcelFileMatrix1[0].MemberName | 
+                    Should -BeNullOrEmpty
+                    $testExcelFileMatrix1[1].MemberName | 
+                    Should -Be 'Sean Connery'
+                    $testExcelFileMatrix1[2].MemberName | 
+                    Should -Be 'Timothy Dalton'
+                    $testExcelFileMatrix1[3].MemberName | 
+                    Should -Be 'Craig Daniel'
+                    $testExcelFileMatrix1[4].MemberName | 
+                    Should -BeNullOrEmpty
 
-                $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].MemberName | Should -BeNullOrEmpty
-                $testExcelFileMatrix2[1].MemberName | Should -BeNullOrEmpty
-                $testExcelFileMatrix2[2].MemberName | Should -Be 'Chuck Norris'
-                $testExcelFileMatrix2[3].MemberName | Should -BeNullOrEmpty
-            }
-            It 'MemberSamAccountName' {
-                $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].MemberSamAccountName | 
-                Should -BeNullOrEmpty
-                $testExcelFileMatrix1[1].MemberSamAccountName | 
-                Should -Be 'connery'
-                $testExcelFileMatrix1[2].MemberSamAccountName | 
-                Should -Be 'dalton'
-                $testExcelFileMatrix1[3].MemberSamAccountName | 
-                Should -Be 'craig'
-                $testExcelFileMatrix1[4].MemberSamAccountName | 
-                Should -BeNullOrEmpty
+                    $testExcelFileMatrix2 | Should -HaveCount 4
+                    $testExcelFileMatrix2[0].MemberName | Should -BeNullOrEmpty
+                    $testExcelFileMatrix2[1].MemberName | Should -BeNullOrEmpty
+                    $testExcelFileMatrix2[2].MemberName | Should -Be 'Chuck Norris'
+                    $testExcelFileMatrix2[3].MemberName | Should -BeNullOrEmpty
+                }
+                It 'MemberSamAccountName' {
+                    $testExcelFileMatrix1 | Should -HaveCount 5
+                    $testExcelFileMatrix1[0].MemberSamAccountName | 
+                    Should -BeNullOrEmpty
+                    $testExcelFileMatrix1[1].MemberSamAccountName | 
+                    Should -Be 'connery'
+                    $testExcelFileMatrix1[2].MemberSamAccountName | 
+                    Should -Be 'dalton'
+                    $testExcelFileMatrix1[3].MemberSamAccountName | 
+                    Should -Be 'craig'
+                    $testExcelFileMatrix1[4].MemberSamAccountName | 
+                    Should -BeNullOrEmpty
 
-                $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].MemberSamAccountName | 
-                Should -BeNullOrEmpty
-                $testExcelFileMatrix2[1].MemberSamAccountName | 
-                Should -BeNullOrEmpty
-                $testExcelFileMatrix2[2].MemberSamAccountName | 
-                Should -Be 'cnorris'
-                $testExcelFileMatrix2[3].MemberSamAccountName | 
-                Should -BeNullOrEmpty
+                    $testExcelFileMatrix2 | Should -HaveCount 4
+                    $testExcelFileMatrix2[0].MemberSamAccountName | 
+                    Should -BeNullOrEmpty
+                    $testExcelFileMatrix2[1].MemberSamAccountName | 
+                    Should -BeNullOrEmpty
+                    $testExcelFileMatrix2[2].MemberSamAccountName | 
+                    Should -Be 'cnorris'
+                    $testExcelFileMatrix2[3].MemberSamAccountName | 
+                    Should -BeNullOrEmpty
+                }
             }
         }
     }
@@ -360,14 +371,26 @@ Describe 'when there is no terminating error' {
                 ($To -eq 'm@contoso.com') -and
                 ($Subject -eq 'MI6 007 agents, 3 users, 2 groups') -and
                 ($Attachments -like '*MI6 007 agents.xlsx') -and
-                ($Message -like '*users*3*groups*2*')
+                ($Message -like '*
+                *<a href="https://some-portal-url" target="_blank">IT Self-service Portal</a>*
+                *<a href="\\contoso.com\input\007agents.xlsx">MI6 007 agents.xlsx</a>*
+                *Folder*<a href="\\contoso.com\gbr\MI6\agents"></a>*
+                *Unique users*3*
+                *Unique groups*2*
+                *Check the attachment for details*')
             }
             Should -Invoke Send-MailHC -Times 1 -Exactly -Scope Describe -ParameterFilter {
                 ($To -eq 'admiral@contoso.com') -and
                 ($Subject -eq 'Star Trek captains, 3 users, 2 groups') -and
                 ($Attachments -like '*Star Trek captains.xlsx') -and
-                ($Message -like '*users*3*groups*2*')
+                ($Message -like '*
+                *<a href="https://some-portal-url" target="_blank">IT Self-service Portal</a>*
+                *<a href="\\contoso.com\input\star-trek.xlsx">Star Trek captains.xlsx</a>*
+                *Folder*<a href="\\contoso.com\usa\star-trek">*
+                *Unique users*3*
+                *Unique groups*2*
+                *Check the attachment for details*')
             }
-        } -tag test
+        } -Tag test
     }
 }
