@@ -6,10 +6,11 @@ BeforeAll {
 
     $testScript = $PSCommandPath.Replace('.Tests.ps1', '.ps1')
     $testParams = @{
-        Path             = New-Item 'TestDrive:/overview.xlsx' -ItemType File
-        ScriptName       = 'Test (Brecht)'
-        LogFolder        = New-Item 'TestDrive:/log' -ItemType Directory
-        RequestTicketURL = 'https://some-portal-url'
+        Path                   = New-Item 'TestDrive:/overview.xlsx' -ItemType File
+        ScriptName             = 'Test (Brecht)'
+        LogFolder              = New-Item 'TestDrive:/log' -ItemType Directory
+        RequestTicketURL       = 'https://some-portal-url'
+        ExcludedSamAccountName = 'ignoreMe'
     }
 
     Mock Send-MailHC
@@ -173,6 +174,11 @@ Describe 'when there is no terminating error' {
                         Name           = 'Craig Daniel' 
                         SamAccountName = 'craig' 
                     }
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Ignored account'
+                        SamAccountName = 'ignoreMe' 
+                    }
                 )
             }
             [PSCustomObject]@{
@@ -184,12 +190,21 @@ Describe 'when there is no terminating error' {
                         Name           = 'Chuck Norris'
                         SamAccountName = 'cnorris' 
                     }
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Ignored account'
+                        SamAccountName = 'ignoreMe' 
+                    }
                 )
             }
             [PSCustomObject]@{
                 samAccountName = 'group3'
                 adObject       = @{ ObjectClass = 'group'; Name = 'Group3' }
-                adGroupMember  = $null
+                adGroupMember  = @{ 
+                    ObjectClass    = 'user'
+                    Name           = 'Ignored account'
+                    SamAccountName = 'ignoreMe' 
+                }
             }
             [PSCustomObject]@{
                 samAccountName = 'group4'
@@ -200,6 +215,11 @@ Describe 'when there is no terminating error' {
                         Name           = 'khan'
                         SamAccountName = 'khan' 
                     }
+                    @{ 
+                        ObjectClass    = 'user'
+                        Name           = 'Ignored account'
+                        SamAccountName = 'ignoreMe' 
+                    }
                 )
             }
         }
@@ -207,7 +227,7 @@ Describe 'when there is no terminating error' {
         .$testScript @testParams
     }
     Context 'the matrix data exported for Cherwell is imported from worksheet' {
-        It '<_>' -Foreach @('AdObjectNames', 'FormData') {
+        It '<_>' -ForEach @('AdObjectNames', 'FormData') {
             Should -Invoke Import-Excel -Times 1 -Exactly -Scope Describe -ParameterFilter { $WorksheetName -eq $_ }
         }
     }
@@ -229,17 +249,23 @@ Describe 'when there is no terminating error' {
             Get-ChildItem @testGetParams | Should -BeNullOrEmpty
         }
     }
-    It 'AD details and group members are only retrieved once for each unique SamAccountName' {
-        foreach ($name in 
-            @( 
-                'craig', 'drNo', 
-                'group1', 'group2', 'group3', 
-                'kirk', 'picard'
-            )
-        ) {
-            Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
-                (($SamAccountName | Where-Object { $_ -eq $name }).count -eq 1)
-            }   
+    Context 'AD details' {
+        It 'are retrieved for unique SamAccountName' {
+            foreach ($name in 
+                @( 
+                    'craig', 'drNo', 
+                    'group1', 'group2', 'group3', 
+                    'kirk', 'picard'
+                )
+            ) {
+                Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
+                    (($SamAccountName | Where-Object { $_ -eq $name }).count -eq 1)
+                }   
+            }
+        }
+        It 'accounts in ExcludedSamAccountName are ignored as group member' {
+            $ADObjectDetails.adGroupMember.SamAccountName | 
+            Should -Not -Contain 'ignoreMe'
         }
     }
     Context 'an Excel file is created' {

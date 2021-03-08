@@ -18,6 +18,10 @@
 .PARAMETER Path
     Path to the Excel file containing the matrix information that is used
     for the export to the Cherwell forms.
+
+.PARAMETER ExcludedSamAccountName
+    Group members that can be found in this list will be ignored. This is useful
+    for place holder accounts in groups that need not to be taken into account.
 #>
 
 [CmdLetBinding()]
@@ -26,6 +30,7 @@ Param (
     [string]$Path,
     [String]$ScriptName = 'Permission matrix audit report (BNL)',
     [String]$RequestTicketURL = 'https://1itsm.grouphc.net/CherwellPortal',
+    [String[]]$ExcludedSamAccountName,
     [String]$LogFolder = $env:POWERSHELL_LOG_FOLDER ,
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
@@ -35,12 +40,12 @@ Begin {
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
         Get-ScriptRuntimeHC -Start
+        
+        $Error.Clear()
 
         Write-EventLog @EventVerboseParams -Message "PSBoundParameters:`n $(
             $PSBoundParameters.GetEnumerator() | 
             ForEach-Object {"`n- $($_.Key): $($_.Value)" })"
-
-        $Error.Clear()
 
         #region Test valid Path
         if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
@@ -119,6 +124,17 @@ Process {
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
         #endregion
 
+        #region Remove group members that are in the ExcludedSamAccountName
+        if ($ExcludedSamAccountName) {
+            foreach ($adObject in $ADObjectDetails) {
+                $adObject.adGroupMember = $adObject.adGroupMember |
+                Where-Object { 
+                    $ExcludedSamAccountName -notContains $_.SamAccountName 
+                }
+            }
+        }
+        #endregion
+
         #region On error exit the script
         if ($error) {
             throw "Error after executing the job that retrieves AD object details, no emails are sent: $($error.Exception.Message -join ', ')"
@@ -185,8 +201,8 @@ Process {
             ).SamAccountName
 
             $adObjectsToExport = foreach ($s in $matrixSamAccountNames) {
-                $adData = $ADObjectDetails | Where-Object {
-                    $s -EQ $_.samAccountName }
+                $adData = $ADObjectDetails | 
+                Where-Object { $s -EQ $_.samAccountName }
                 
                 if (-not $adData.adObject) {
                     Write-Warning "SamAccountName '$s' not found in AD"
