@@ -18,18 +18,12 @@
 .PARAMETER Path
     Path to the Excel file containing the matrix information that is used
     for the export to the Cherwell forms.
-
-.PARAMETER MaxThreads
-    Quantity of jobs allowed to run at the same time when  querying the 
-    active director for details.
 #>
 
 [CmdLetBinding()]
 Param (
     [Parameter(Mandatory)]
     [string]$Path,
-    [ValidateRange(1, 7)]
-    [Int]$MaxThreads = 3,
     [String]$ScriptName = 'Permission matrix access (BNL)',
     [String]$LogFolder = $env:POWERSHELL_LOG_FOLDER ,
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
