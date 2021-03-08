@@ -265,6 +265,9 @@ Describe 'when there is no terminating error' {
         }
         It 'accounts in ExcludedSamAccountName are ignored as group member' {
             $ADObjectDetails.adGroupMember.SamAccountName | 
+            Should -Not -BeNullOrEmpty
+
+            $ADObjectDetails.adGroupMember.SamAccountName | 
             Should -Not -Contain 'ignoreMe'
         }
     }
