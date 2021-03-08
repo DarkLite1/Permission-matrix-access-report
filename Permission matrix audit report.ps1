@@ -125,13 +125,63 @@ Process {
         #endregion
             
         #region Create Excel file for each matrix and send mail
+        $htmlStyle = @"
+        <style>
+            a {
+                color: black;
+                text-decoration: underline;
+            }
+            a:hover {
+                color: blue;
+            }
+        
+            #matrixTable {
+                border: 1px solid Black;
+                /* padding-bottom: 60px; */
+                /* border-spacing: 0.5em; */
+                border-collapse: separate;
+                border-spacing: 0px 0.6em;
+                /* padding: 10px; */
+                /* width: 600px; */
+            }
+        
+            #matrixTitle {
+                border: none;
+                background-color: lightgrey;
+                text-align: center;
+                padding: 6px;
+            }
+        
+            #matrixHeader {
+                font-weight: normal;
+                letter-spacing: 5pt;
+                font-style: italic;
+            }
+        
+            #matrixFileInfo {
+                font-weight: normal;
+                font-size: 12px;
+                font-style: italic;
+                text-align: center;
+            }
+        
+            <! –– 
+            table tbody tr td a {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            ––> 
+        </style>
+"@
+
         foreach ($matrix in $matrixWithResponsible) {
             $M = "Matrix '$($matrix.MatrixFileName)'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
-            $matrixSamAccountNames = ($adObjectNames | Where-Object {
-                    $matrix.MatrixFileName -eq $_.MatrixFileName 
-                }).SamAccountName
+            $matrixSamAccountNames = ($adObjectNames | 
+                Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName }
+            ).SamAccountName
 
             $adObjectsToExport = foreach ($s in $matrixSamAccountNames) {
                 $adData = $ADObjectDetails | Where-Object {
@@ -179,56 +229,6 @@ Process {
                 #endregion
                 
                 #region Send mail to user
-                $htmlStyle = @"
-                <style>
-                    a {
-                        color: black;
-                        text-decoration: underline;
-                    }
-                    a:hover {
-                        color: blue;
-                    }
-                
-                    #matrixTable {
-                        border: 1px solid Black;
-                        /* padding-bottom: 60px; */
-                        /* border-spacing: 0.5em; */
-                        border-collapse: separate;
-                        border-spacing: 0px 0.6em;
-                        /* padding: 10px; */
-                        /* width: 600px; */
-                    }
-                
-                    #matrixTitle {
-                        border: none;
-                        background-color: lightgrey;
-                        text-align: center;
-                        padding: 6px;
-                    }
-                
-                    #matrixHeader {
-                        font-weight: normal;
-                        letter-spacing: 5pt;
-                        font-style: italic;
-                    }
-                
-                    #matrixFileInfo {
-                        font-weight: normal;
-                        font-size: 12px;
-                        font-style: italic;
-                        text-align: center;
-                    }
-                
-                    <! –– 
-                    table tbody tr td a {
-                        display: block;
-                        width: 100%;
-                        height: 100%;
-                    }
-                    ––> 
-                </style>
-"@
-
                 $uniqueUserCount = (
                     @(($adObjectsToExport.Where( { $_.Type -eq 'user' })).samAccountName) +
                     @(($adObjectsToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) | 
