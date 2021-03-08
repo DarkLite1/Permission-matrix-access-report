@@ -205,7 +205,7 @@ Describe 'when there is no terminating error' {
         
         .$testScript @testParams
     }
-    Context 'the Excel data is imported from worksheet' {
+    Context 'the matrix data exported for Cherwell is imported from worksheet' {
         It '<_>' -ForEach @('AdObjectNames', 'FormData') {
             Should -Invoke Import-Excel -Times 1 -Exactly -Scope Describe -ParameterFilter { $WorksheetName -eq $_ }
         }
