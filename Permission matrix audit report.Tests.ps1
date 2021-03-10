@@ -557,6 +557,6 @@ Describe 'when there is no terminating error' {
                 *Unique groups*2*
                 *Check the attachment for details*')
             }
-        } -tag test
+        }
     }
 }
