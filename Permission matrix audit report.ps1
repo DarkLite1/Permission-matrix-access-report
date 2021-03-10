@@ -133,7 +133,7 @@ Process {
         #region Get AD object details for group managers
         if (
             $groupManagers = $ADObjectDetails.ADObject.ManagedBy | 
-            Where-Object { $_ } | Get-Unique
+            Sort-Object -Unique
         ) {
             $M = "Retrieve AD object details for $($groupManagers.Count) group managers"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
