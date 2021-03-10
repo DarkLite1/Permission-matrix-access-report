@@ -3,25 +3,32 @@
 
 <#
 .SYNOPSIS
-    Get all AD objects used in a matrix and retrieve the AD object details
+    Report about AD objects used in the matrix.
 
 .DESCRIPTION
     The script reads a single Excel input file that contains the 
-    SamAccountNames of all  AD objects used in the matrix files. This is the
-    file created by the Permission Matrix script for displaying date in the 
+    SamAccountNames of all AD objects used in the matrix files. This is the
+    file created by the 'Permission Matrix' script for displaying date in the 
     Cherwell forms.
 
-    An e-mail is sent to users defined in the field  'MatrixResponsible' with
-    in attachment an overview of all users, groups and group members that have
-    access to the folders.
+    An e-mail is sent for each individual matrix to the e-mail address defined
+    in the filed 'MatrixResponsible' in the Cherwell file. The e-mail has an
+    Excel file in attachment containing two worksheets. One with an overview
+    of the AD Objects used in the matrix (SamAccountName, Name, ...) and the 
+    group members in case groups are used. The other worksheet contains an
+    overview of all the groups used in the matrix, with their manager and the
+    members of the group managers (in case it concerns a group).
     
 .PARAMETER Path
-    Path to the Excel file containing the matrix information that is used
-    for the export to the Cherwell forms.
+    Path to the Excel file containing the matrix AD object names. This is the file that has been exported previously by the 'Permission matrix' script 
+    with the parameter '-Cherwell'.
 
 .PARAMETER ExcludedSamAccountName
-    Group members that can be found in this list will be ignored. This is useful
-    for place holder accounts in groups that need not to be taken into account.
+    SamAccountNames that are part of this list will be removed from group 
+    memberships and will be disregarded by the entire script.
+
+    This allows for the use of placeholder accounts within AD groups that 
+    need to be ignored and are not important to end users.
 #>
 
 [CmdLetBinding()]
