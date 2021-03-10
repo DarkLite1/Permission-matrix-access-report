@@ -178,7 +178,7 @@ Process {
 
 End {
     Try {
-        #region Create Excel file for each matrix and send mail
+        #region HTML style
         $htmlStyle = @"
            <style>
                a {
@@ -228,6 +228,7 @@ End {
                ––> 
            </style>
 "@
+        #endregion
    
         foreach ($matrix in $matrixWithResponsible) {
             $M = "Matrix '$($matrix.MatrixFileName)'"
@@ -237,7 +238,7 @@ End {
             Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName } |
             Select-Object -ExpandProperty SamAccountName
 
-            #region Create objects for worksheet 'AccessList'
+            #region Create Excel worksheet 'AccessList'
             $AccessListToExport = foreach ($S in $matrixSamAccountNames) {
                 $adData = $ADObjectDetails | 
                 Where-Object { $S -EQ $_.samAccountName }
@@ -264,7 +265,7 @@ End {
             }
             #endregion
 
-            #region Create objects for worksheet 'GroupManagers'
+            #region Create Excel worksheet 'GroupManagers'
             $GroupManagersToExport = foreach ($S in $matrixSamAccountNames) {
                 $adData = (
                     $ADObjectDetails | Where-Object { 
@@ -308,7 +309,7 @@ End {
             #endregion
    
             if ($AccessListToExport) {
-                #region Export to worksheet 'AccessList'
+                #region Export to Excel worksheet 'AccessList'
                 $excelParams = @{
                     Path               = "$logFile- $($matrix.MatrixFileName).xlsx"
                     AutoSize           = $true
@@ -324,7 +325,7 @@ End {
                 $AccessListToExport | Export-Excel @excelParams
                 #endregion
 
-                #region Export to worksheet 'GroupManagers'
+                #region Export to Excel worksheet 'GroupManagers'
                 if ($GroupManagersToExport) {
                     $excelParams.WorksheetName = $excelParams.TableName = 'GroupManagers'
                     
@@ -401,7 +402,6 @@ End {
                 #endregion
             }
         }
-        #endregion
     }
     Catch {
         Write-Warning $_
