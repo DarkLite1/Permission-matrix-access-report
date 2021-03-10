@@ -538,7 +538,7 @@ Describe 'when there is no terminating error' {
                 ($Subject -eq 'MI6 007 agents, 3 users, 2 groups') -and
                 ($Attachments -like '*MI6 007 agents.xlsx') -and
                 ($Message -like '*
-                *<a href="https://some-portal-url" target="_blank">IT Self-service Portal</a>*
+                *<a href="https://some-portal-url" target="_blank"><b>IT Self-service Portal</b></a>*
                 *<a href="\\contoso.com\input\007agents.xlsx">MI6 007 agents.xlsx</a>*
                 *Folder*<a href="\\contoso.com\gbr\MI6\agents"></a>*
                 *Unique users*3*
@@ -550,13 +550,13 @@ Describe 'when there is no terminating error' {
                 ($Subject -eq 'Star Trek captains, 3 users, 2 groups') -and
                 ($Attachments -like '*Star Trek captains.xlsx') -and
                 ($Message -like '*
-                *<a href="https://some-portal-url" target="_blank">IT Self-service Portal</a>*
+                *<a href="https://some-portal-url" target="_blank"><b>IT Self-service Portal</b></a>*
                 *<a href="\\contoso.com\input\star-trek.xlsx">Star Trek captains.xlsx</a>*
                 *Folder*<a href="\\contoso.com\usa\star-trek">*
                 *Unique users*3*
                 *Unique groups*2*
                 *Check the attachment for details*')
             }
-        }
+        } -tag test
     }
 }
