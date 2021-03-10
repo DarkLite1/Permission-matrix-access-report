@@ -510,7 +510,7 @@ Describe 'when there is no terminating error' {
                 $testExcelFileMatrix2[2].ManagerType | Should -Be 'group'
                 $testExcelFileMatrix2[3].ManagerType | Should -Be 'group'
             }
-            it 'ManagerMemberName' {
+            It 'ManagerMemberName' {
                 $testExcelFileMatrix1[0].ManagerMemberName | 
                 Should -Be 'Tha Boss'
                 $testExcelFileMatrix1[1].ManagerMemberName | 
