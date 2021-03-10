@@ -479,7 +479,7 @@ Describe 'when there is no terminating error' {
                 $testExcelFileMatrix2[1].GroupName | Should -Be 'Group2'
                 $testExcelFileMatrix2[2].GroupName | Should -Be 'Group3'
                 $testExcelFileMatrix2[3].GroupName | Should -Be 'Group3'
-            } -Tag test
+            }
             It 'ManagerName' {
                 $testExcelFileMatrix1[0].ManagerName | 
                 Should -Be 'ManagerGroup1'
