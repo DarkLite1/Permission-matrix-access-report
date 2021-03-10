@@ -325,7 +325,7 @@ Describe 'when there is no terminating error' {
 
             $groupManagersAdDetails.adGroupMember.SamAccountName | 
             Should -Not -Contain 'ignoreMe'
-        }
+        } -tag test
     }
     Context 'an Excel file is created' {
         BeforeAll {
