@@ -83,9 +83,9 @@ Process {
             Path          = $Path
             ErrorAction   = 'Stop'
         }
-        [array]$adObjectNames = Import-Excel @importParams
+        [array]$worksheetADObjectNames = Import-Excel @importParams
             
-        $M = "Imported $($adObjectNames.Count) rows from the worksheet '$($importParams.WorksheetName)'"
+        $M = "Imported $($worksheetADObjectNames.Count) rows from the worksheet '$($importParams.WorksheetName)'"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
         #endregion
 
@@ -102,8 +102,8 @@ Process {
             { $_.MatrixResponsible }, 'Split')
         #endregion
 
-        #region Get unique samAccountNames that need to be checked
-        $uniqueSamAccountNamesToCheck = $adObjectNames | 
+        #region Get AD object details for objects in the cherwell file
+        $samAccountNames = $worksheetADObjectNames | 
         Where-Object { 
             $matrixWithResponsible.MatrixFileName -contains $_.MatrixFileName 
         } | 
@@ -112,20 +112,30 @@ Process {
             Expression = { "$($_.SamAccountName)".Trim() } 
         } -Unique |
         Select-Object -ExpandProperty name
-        #endregion
-    
-        #region Get AD object details and AD group members
-        $M = "Retrieve AD object details for $($uniqueSamAccountNamesToCheck.Count) unique SamAccountNames"
+
+        $M = "Retrieve AD object details for $($samAccountNames.Count) objects used in the Cherwell file"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
         $getADObjectParams = @{
-            SamAccountName   = $uniqueSamAccountNamesToCheck
-            ADObjectProperty = @('Manager', 'ManagedBy')
+            SamAccountName   = $samAccountNames
+            ADObjectProperty = 'ManagedBy'
         }
         $ADObjectDetails = Get-ADObjectDetailHC @getADObjectParams
+        #endregion
 
-        $M = "Retrieved $($ADObjectDetails.Count) AD object details"
-        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+        #region Get AD object details for group managers
+        if (
+            $groupManagers = $ADObjectDetails.ADObject.ManagedBy | 
+            Where-Object { $_ } | Get-Unique
+        ) {
+            $M = "Retrieve AD object details for $($groupManagers.Count) group managers"
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+                
+            $getADObjectParams = @{
+                DistinguishedName = $groupManagers
+            }
+            $groupManagersAdDetails = Get-ADObjectDetailHC @getADObjectParams
+        }
         #endregion
 
         #region Remove group members that are in the ExcludedSamAccountName
@@ -136,11 +146,17 @@ Process {
                     $ExcludedSamAccountName -notContains $_.SamAccountName 
                 }
             }
+            foreach ($adObject in $groupManagersAdDetails) {
+                $adObject.adGroupMember = $adObject.adGroupMember |
+                Where-Object { 
+                    $ExcludedSamAccountName -notContains $_.SamAccountName 
+                }
+            }
         }
         #endregion
 
         #region On error exit the script
-        if ($error) {
+        if ($error.Exception.Message) {
             throw "Error after executing the job that retrieves AD object details, no emails are sent: $($error.Exception.Message -join ', ')"
         }
         #endregion
@@ -210,16 +226,17 @@ End {
             $M = "Matrix '$($matrix.MatrixFileName)'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
                
-            $matrixSamAccountNames = ($adObjectNames | 
-                Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName }
-            ).SamAccountName
-   
-            $adObjectsToExport = foreach ($s in $matrixSamAccountNames) {
+            $matrixSamAccountNames = $worksheetADObjectNames | 
+            Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName } |
+            Select-Object -ExpandProperty SamAccountName
+
+            #region Create objects for worksheet 'AccessList'
+            $AccessListToExport = foreach ($S in $matrixSamAccountNames) {
                 $adData = $ADObjectDetails | 
-                Where-Object { $s -EQ $_.samAccountName }
+                Where-Object { $S -EQ $_.samAccountName }
                    
                 if (-not $adData.adObject) {
-                    Write-Warning "SamAccountName '$s' not found in AD"
+                    Write-Warning "SamAccountName '$S' not found in AD"
                 }
                 elseif (-not $adData.adGroupMember) {
                     $adData | Select-Object -Property SamAccountName, 
@@ -230,7 +247,7 @@ End {
                 else {
                     $adData.adGroupMember | Select-Object -Property @{
                         Name       = 'SamAccountName'; 
-                        Expression = { $s } 
+                        Expression = { $S } 
                     },
                     @{Name = 'Name'; Expression = { $adData.adObject.Name } },
                     @{Name = 'Type'; Expression = { $adData.adObject.ObjectClass } },
@@ -238,12 +255,53 @@ End {
                     @{Name = 'MemberSamAccountName'; Expression = { $_.SamAccountName } }
                 }
             }
+            #endregion
+
+            #region Create objects for worksheet 'GroupManagers'
+            $GroupManagersToExport = foreach ($S in $matrixSamAccountNames) {
+                $adData = (
+                    $ADObjectDetails | Where-Object { 
+                        ($S -EQ $_.samAccountName) -and
+                        ($_.adObject.ObjectClass -eq 'group')
+                    }
+                )
+                if ($adData) {
+                    $groupManager = $groupManagersAdDetails | Where-Object {
+                        $_.DistinguishedName -eq $adData.adObject.ManagedBy
+                    }
+
+                    if (-not $groupManager) {
+                        [PSCustomObject]@{
+                            GroupName         = $adData.adObject.Name
+                            ManagerName       = $null
+                            ManagerType       = $null
+                            ManagerMemberName = $null
+                        }
+                    }
+                    elseif (-not $groupManager.adGroupMember) {
+                        [PSCustomObject]@{
+                            GroupName         = $adData.adObject.Name
+                            ManagerName       = $groupManager.adObject.Name
+                            ManagerType       = $groupManager.adObject.ObjectClass
+                            ManagerMemberName = $null
+                        }
+                    }
+                    else {
+                        foreach ($user in $groupManager.adGroupMember) {
+                            [PSCustomObject]@{
+                                GroupName         = $adData.adObject.Name
+                                ManagerName       = $groupManager.adObject.Name
+                                ManagerType       = $groupManager.adObject.ObjectClass
+                                ManagerMemberName = $user.Name
+                            }
+                        }
+                    }
+                }
+            }
+            #endregion
    
-            $M = "Created $($adObjectsToExport.Count) AD objects"
-            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-   
-            if ($adObjectsToExport) {
-                #region Create Excel file
+            if ($AccessListToExport) {
+                #region Export to worksheet 'AccessList'
                 $excelParams = @{
                     Path               = "$logFile- $($matrix.MatrixFileName).xlsx"
                     AutoSize           = $true
@@ -253,20 +311,31 @@ End {
                     NoNumberConversion = '*'
                 }
                    
-                $M = "Export $($adObjectsToExport.Count) AD objects to Excel file '$($excelParams.Path)'"
+                $M = "Export $($AccessListToExport.Count) AD objects to Excel file '$($excelParams.Path)' worksheet '$($excelParams.WorksheetName)'"
                 Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
    
-                $adObjectsToExport | Export-Excel @excelParams
+                $AccessListToExport | Export-Excel @excelParams
+                #endregion
+
+                #region Export to worksheet 'GroupManagers'
+                if ($GroupManagersToExport) {
+                    $excelParams.WorksheetName = $excelParams.TableName = 'GroupManagers'
+                    
+                    $M = "Export $($GroupManagersToExport.Count) AD objects to Excel file '$($excelParams.Path)' worksheet '$($excelParams.WorksheetName)'"
+                    Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+                    
+                    $GroupManagersToExport | Export-Excel @excelParams
+                }
                 #endregion
                    
                 #region Send mail to user
                 $uniqueUserCount = (
-                    @(($adObjectsToExport.Where( { $_.Type -eq 'user' })).samAccountName) +
-                    @(($adObjectsToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) | 
+                    @(($AccessListToExport.Where( { $_.Type -eq 'user' })).samAccountName) +
+                    @(($AccessListToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) | 
                     Sort-Object -Unique | Where-Object { $_ }
                 ).Count
    
-                $uniqueGroupCount = ($adObjectsToExport.Where( { $_.Type -eq 'group' }) | Select-Object Name -Unique).Count
+                $uniqueGroupCount = ($AccessListToExport.Where( { $_.Type -eq 'group' }) | Select-Object Name -Unique).Count
    
                 $M = "Send mail with $uniqueUserCount unique user accounts and $uniqueGroupCount unique groups"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
