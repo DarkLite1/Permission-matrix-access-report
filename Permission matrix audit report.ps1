@@ -12,7 +12,7 @@
     Cherwell forms.
 
     An e-mail is sent for each individual matrix to the e-mail address defined
-    in the filed 'MatrixResponsible' in the Cherwell file. The e-mail has an
+    in the field 'MatrixResponsible' in the Cherwell file. The e-mail has an
     Excel file in attachment containing two worksheets. One with an overview
     of the AD Objects used in the matrix (SamAccountName, Name, ...) and the 
     group members in case groups are used. The other worksheet contains an
