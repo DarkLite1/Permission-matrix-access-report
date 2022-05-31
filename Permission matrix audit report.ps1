@@ -8,7 +8,7 @@
 .DESCRIPTION
     The script reads a single Excel input file that contains the 
     SamAccountNames of all AD objects used in the matrix files. This is the
-    file created by the 'Permission Matrix' script for displaying date in the 
+    file created by the 'Permission Matrix' script for displaying data in the 
     Cherwell forms.
 
     An e-mail is sent for each individual matrix to the e-mail address defined
