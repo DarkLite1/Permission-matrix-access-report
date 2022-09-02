@@ -38,8 +38,8 @@ Param (
     [String]$ScriptName = 'Permission matrix audit report (BNL)',
     [String]$RequestTicketURL = 'https://1itsm.grouphc.net/CherwellPortal',
     [String[]]$ExcludedSamAccountName,
-    [String]$LogFolder = $env:POWERSHELL_LOG_FOLDER ,
-    [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
+    [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\Permission matrix\$ScriptName",
+    [String[]]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
 
 Begin {
@@ -65,13 +65,18 @@ Begin {
         #endregion
 
         #region Logging
-        $LogParams = @{
-            LogFolder    = New-FolderHC -Path $LogFolder -ChildPath "Permission matrix\$ScriptName"
-            Name         = $ScriptName
-            Date         = 'ScriptStartTime'
-            NoFormatting = $true
+        try {
+            $logParams = @{
+                LogFolder    = New-Item -Path $LogFolder -ItemType 'Directory' -Force -ErrorAction 'Stop'
+                Name         = $ScriptName
+                Date         = 'ScriptStartTime'
+                NoFormatting = $true
+            }
+            $logFile = New-LogFileNameHC @LogParams
         }
-        $LogFile = New-LogFileNameHC @LogParams
+        Catch {
+            throw "Failed creating the log folder '$LogFolder': $_"
+        }
         #endregion
     }
     Catch {
