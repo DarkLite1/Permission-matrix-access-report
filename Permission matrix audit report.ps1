@@ -37,7 +37,7 @@ Param (
     [string]$Path,
     [String]$ScriptName = 'Permission matrix audit report (BNL)',
     [String]$RequestTicketURL = 'https://1itsm.grouphc.net/CherwellPortal',
-    [String[]]$ExcludedSamAccountName,
+    [String[]]$ExcludedSamAccountName = 'srvbatch',
     [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\Permission matrix\$ScriptName",
     [String[]]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
