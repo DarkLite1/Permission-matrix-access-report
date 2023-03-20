@@ -23,6 +23,9 @@
     Path to the Excel file containing the matrix AD object names. This is the file that has been exported previously by the 'Permission matrix' script 
     with the parameter '-Cherwell'.
 
+.PARAMETER MailBcc
+    E=-mail address to add to the Bcc part of the e-mail receivers.
+
 .PARAMETER ExcludedSamAccountName
     SamAccountNames that are part of this list will be removed from group 
     memberships and will be disregarded by the entire script.
@@ -37,7 +40,8 @@ Param (
     [string]$Path,
     [String]$ScriptName = 'Permission matrix audit report (BNL)',
     [String]$RequestTicketURL = 'https://1itsm.grouphc.net/CherwellPortal',
-    [String[]]$ExcludedSamAccountName = 'srvbatch',
+    [String[]]$ExcludedSamAccountName,
+    [String[]]$MailBcc,
     [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\Permission matrix\$ScriptName",
     [String[]]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
@@ -405,6 +409,10 @@ End {
                     LogFolder   = $LogParams.LogFolder
                     Header      = $ScriptName
                     Save        = $LogFile + ' - Mail.html'
+                }
+
+                if ($MailBcc) {
+                    $mailParams += $MailBcc
                 }
                 Send-MailHC @mailParams
                 #endregion
