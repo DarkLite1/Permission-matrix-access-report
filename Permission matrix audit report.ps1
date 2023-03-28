@@ -412,7 +412,7 @@ End {
                 }
 
                 if ($MailBcc) {
-                    $mailParams += $MailBcc
+                    $mailParams.Bcc += $MailBcc
                 }
                 Send-MailHC @mailParams
                 #endregion
