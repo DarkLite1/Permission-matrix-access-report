@@ -320,7 +320,8 @@ End {
             if ($AccessListToExport) {
                 #region Export to Excel worksheet 'AccessList'
                 $excelParams = @{
-                    Path               = "$logFile- $($matrix.MatrixFileName).xlsx"
+                    Path               = "{0} - {1}.xlsx" -f 
+                    $logFile, $matrix.MatrixFileName
                     AutoSize           = $true
                     WorksheetName      = 'AccessList'
                     TableName          = 'AccessList'
@@ -358,9 +359,10 @@ End {
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
    
                 $mailParams = @{
-                    To          = $matrix.MatrixResponsible
+                    To          = $matrix.MatrixResponsible.Split(',')
                     Bcc         = $ScriptAdmin
-                    Subject     = "$($matrix.MatrixFileName), $uniqueUserCount users, $uniqueGroupCount groups"
+                    Subject     = "{0}, {1} users, {2} groups" -f 
+                    $matrix.MatrixFileName, $uniqueUserCount, $uniqueGroupCount
                     Attachments = $excelParams.Path
                     Message     =
                     "$htmlStyle
@@ -408,12 +410,15 @@ End {
                        <p><i>* Check the attachment for details</i></p>"
                     LogFolder   = $LogParams.LogFolder
                     Header      = $ScriptName
-                    Save        = $LogFile + ' - Mail.html'
+                    Save        = '{0} - {1} - Mail.html' -f
+                    $LogFile, $matrix.MatrixFileName
+                    ErrorAction = 'Stop'
                 }
 
                 if ($MailBcc) {
                     $mailParams.Bcc += $MailBcc
                 }
+                
                 Send-MailHC @mailParams
                 #endregion
             }
