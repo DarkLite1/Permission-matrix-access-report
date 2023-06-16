@@ -179,6 +179,7 @@ Process {
     }
     Catch {
         Write-Warning $_
+        Send-MailHC -To $ScriptAdmin -Subject 'FAILURE' -Priority 'High' -Message $_ -Header $ScriptName
         Write-EventLog @EventErrorParams -Message "FAILURE:`n`n- $_"
         Write-EventLog @EventEndParams
         $errorMessage = $_; $global:error.RemoveAt(0); throw $errorMessage
@@ -372,6 +373,8 @@ End {
                        <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid.</p>
                        
                        <p>In case something needs to be updated or changed, feel free to report this to us by submitting the form <b>`"Request folder/role access`"</b> on the <a href=`"$RequestTicketURL`" target=`"_blank`"><b>IT Self-service Portal</b></a>.</p>
+
+                       <p>More information can be found <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Convention+-+Matrix+-+users`" target=`"_blank`"><b>here</b></a> and <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Convention+-+Matrix+-+Managers`" target=`"_blank`"><b>here</b></a>.</p>
    
                        <table id=`"matrixTable`">
                            <tr>
@@ -426,6 +429,7 @@ End {
     }
     Catch {
         Write-Warning $_
+        Send-MailHC -To $ScriptAdmin -Subject 'FAILURE' -Priority 'High' -Message $_ -Header $ScriptName
         Write-EventLog @EventErrorParams -Message "FAILURE:`n`n- $_"
         $errorMessage = $_; $global:error.RemoveAt(0); throw $errorMessage
     }
