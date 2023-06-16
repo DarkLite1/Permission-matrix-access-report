@@ -374,7 +374,7 @@ End {
                        
                        <p>In case something needs to be updated or changed, feel free to report this to us by submitting the form <b>`"Request folder/role access`"</b> on the <a href=`"$RequestTicketURL`" target=`"_blank`"><b>IT Self-service Portal</b></a>.</p>
 
-                       <p>More information can be found <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Convention+-+Matrix+-+users`" target=`"_blank`"><b>here</b></a> and <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Convention+-+Matrix+-+Managers`" target=`"_blank`"><b>here</b></a>.</p>
+                       <p>More information can be found <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Access+Matrix+and+Roles%2C+an+introduction?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a> and <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Matrix+Managers%3A+audit+reports+management?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a>.</p>
    
                        <table id=`"matrixTable`">
                            <tr>
