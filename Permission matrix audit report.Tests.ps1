@@ -11,6 +11,7 @@ BeforeAll {
         LogFolder              = New-Item 'TestDrive:/log' -ItemType Directory
         RequestTicketURL       = 'https://some-portal-url'
         ExcludedSamAccountName = 'ignoreMe'
+        ScriptAdmin            = 'admin@contoso.com'
     }
 
     Mock Send-MailHC
@@ -325,7 +326,7 @@ Describe 'when there is no terminating error' {
 
             $groupManagersAdDetails.adGroupMember.SamAccountName | 
             Should -Not -Contain 'ignoreMe'
-        } -tag test
+        } -Tag test
     }
     Context 'an Excel file is created' {
         BeforeAll {
