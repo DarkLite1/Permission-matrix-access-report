@@ -1,36 +1,37 @@
 #Requires -Version 5.1
-#Requires -Modules ImportExcel, Toolbox.PermissionMatrix
+#Requires -Modules ImportExcel
+#Requires -Modules Toolbox.EventLog, Toolbox.HTML, Toolbox.Remoting
 
 <#
 .SYNOPSIS
     Report about AD objects used in the matrix.
 
 .DESCRIPTION
-    The script reads a single Excel input file that contains the 
+    The script reads a single Excel input file that contains the
     SamAccountNames of all AD objects used in the matrix files. This is the
-    file created by the 'Permission Matrix' script for displaying data in the 
+    file created by the 'Permission Matrix' script for displaying data in the
     Cherwell forms.
 
     An e-mail is sent for each individual matrix to the e-mail address defined
     in the field 'MatrixResponsible' in the Cherwell file. The e-mail has an
     Excel file in attachment containing two worksheets. One with an overview
-    of the AD Objects used in the matrix (SamAccountName, Name, ...) and the 
+    of the AD Objects used in the matrix (SamAccountName, Name, ...) and the
     group members in case groups are used. The other worksheet contains an
     overview of all the groups used in the matrix, with their manager and the
     members of the group managers (in case it concerns a group).
-    
+
 .PARAMETER Path
-    Path to the Excel file containing the matrix AD object names. This is the file that has been exported previously by the 'Permission matrix' script 
+    Path to the Excel file containing the matrix AD object names. This is the file that has been exported previously by the 'Permission matrix' script
     with the parameter '-Cherwell'.
 
 .PARAMETER MailBcc
     E=-mail address to add to the Bcc part of the e-mail receivers.
 
 .PARAMETER ExcludedSamAccountName
-    SamAccountNames that are part of this list will be removed from group 
+    SamAccountNames that are part of this list will be removed from group
     memberships and will be disregarded by the entire script.
 
-    This allows for the use of placeholder accounts within AD groups that 
+    This allows for the use of placeholder accounts within AD groups that
     need to be ignored and are not important to end users.
 #>
 
@@ -54,11 +55,11 @@ Begin {
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
         Get-ScriptRuntimeHC -Start
-        
+
         $Error.Clear()
 
         Write-EventLog @EventVerboseParams -Message "PSBoundParameters:`n $(
-            $PSBoundParameters.GetEnumerator() | 
+            $PSBoundParameters.GetEnumerator() |
             ForEach-Object {"`n- $($_.Key): $($_.Value)" })"
 
         #region Test valid Path
@@ -103,7 +104,7 @@ Process {
             ErrorAction   = 'Stop'
         }
         [array]$worksheetADObjectNames = Import-Excel @importParams
-            
+
         $M = "Imported $($worksheetADObjectNames.Count) rows from the worksheet '$($importParams.WorksheetName)'"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
         #endregion
@@ -111,30 +112,30 @@ Process {
         #region Import worksheet FormData
         $importParams.WorksheetName = 'FormData'
         [array]$formData = Import-Excel @importParams
-            
+
         $M = "Imported $($formData.Count) rows from the worksheet '$($importParams.WorksheetName)'"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
         #endregion
 
         #region Get matrix with and without MatrixResponsible
-        $matrixWithResponsible, $matrixWithoutResponsible = $formData.where( 
+        $matrixWithResponsible, $matrixWithoutResponsible = $formData.where(
             { $_.MatrixResponsible }, 'Split')
         #endregion
 
         #region Get AD object details for objects in the cherwell file
-        $samAccountNames = $worksheetADObjectNames | 
-        Where-Object { 
-            $matrixWithResponsible.MatrixFileName -contains $_.MatrixFileName 
-        } | 
+        $samAccountNames = $worksheetADObjectNames |
+        Where-Object {
+            $matrixWithResponsible.MatrixFileName -contains $_.MatrixFileName
+        } |
         Select-Object -Property @{
-            Name       = 'name'; 
-            Expression = { "$($_.SamAccountName)".Trim() } 
+            Name       = 'name';
+            Expression = { "$($_.SamAccountName)".Trim() }
         } -Unique |
         Select-Object -ExpandProperty name
 
         $M = "Retrieve AD object details for $($samAccountNames.Count) objects used in the Cherwell file"
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-            
+
         $getADObjectParams = @{
             SamAccountName   = $samAccountNames
             ADObjectProperty = 'ManagedBy'
@@ -144,12 +145,12 @@ Process {
 
         #region Get AD object details for group managers
         if (
-            $groupManagers = $ADObjectDetails.ADObject.ManagedBy | 
+            $groupManagers = $ADObjectDetails.ADObject.ManagedBy |
             Sort-Object -Unique
         ) {
             $M = "Retrieve AD object details for $($groupManagers.Count) group managers"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-                
+
             $getADObjectParams = @{
                 DistinguishedName = $groupManagers
             }
@@ -161,14 +162,14 @@ Process {
         if ($ExcludedSamAccountName) {
             foreach ($adObject in $ADObjectDetails) {
                 $adObject.adGroupMember = $adObject.adGroupMember |
-                Where-Object { 
-                    $ExcludedSamAccountName -notContains $_.SamAccountName 
+                Where-Object {
+                    $ExcludedSamAccountName -notContains $_.SamAccountName
                 }
             }
             foreach ($adObject in $groupManagersAdDetails) {
                 $adObject.adGroupMember = $adObject.adGroupMember |
-                Where-Object { 
-                    $ExcludedSamAccountName -notContains $_.SamAccountName 
+                Where-Object {
+                    $ExcludedSamAccountName -notContains $_.SamAccountName
                 }
             }
         }
@@ -201,7 +202,7 @@ End {
                a:hover {
                    color: blue;
                }
-           
+
                #matrixTable {
                    border: 1px solid Black;
                    /* padding-bottom: 60px; */
@@ -211,64 +212,64 @@ End {
                    /* padding: 10px; */
                    /* width: 600px; */
                }
-           
+
                #matrixTitle {
                    border: none;
                    background-color: lightgrey;
                    text-align: center;
                    padding: 6px;
                }
-           
+
                #matrixHeader {
                    font-weight: normal;
                    letter-spacing: 5pt;
                    font-style: italic;
                }
-           
+
                #matrixFileInfo {
                    font-weight: normal;
                    font-size: 12px;
                    font-style: italic;
                    text-align: center;
                }
-           
-               <! –– 
+
+               <! ––
                table tbody tr td a {
                    display: block;
                    width: 100%;
                    height: 100%;
                }
-               ––> 
+               ––>
            </style>
 "@
         #endregion
-   
+
         foreach ($matrix in $matrixWithResponsible) {
             $M = "Matrix '$($matrix.MatrixFileName)'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-               
-            $matrixSamAccountNames = $worksheetADObjectNames | 
+
+            $matrixSamAccountNames = $worksheetADObjectNames |
             Where-Object { $matrix.MatrixFileName -eq $_.MatrixFileName } |
             Select-Object -ExpandProperty SamAccountName
 
             #region Create Excel worksheet 'AccessList'
             $AccessListToExport = foreach ($S in $matrixSamAccountNames) {
-                $adData = $ADObjectDetails | 
+                $adData = $ADObjectDetails |
                 Where-Object { $S -EQ $_.samAccountName }
-                   
+
                 if (-not $adData.adObject) {
                     Write-Warning "SamAccountName '$S' not found in AD"
                 }
                 elseif (-not $adData.adGroupMember) {
-                    $adData | Select-Object -Property SamAccountName, 
+                    $adData | Select-Object -Property SamAccountName,
                     @{Name = 'Name'; Expression = { $_.adObject.Name } },
                     @{Name = 'Type'; Expression = { $_.adObject.ObjectClass } },
                     MemberName, MemberSamAccountName
                 }
                 else {
                     $adData.adGroupMember | Select-Object -Property @{
-                        Name       = 'SamAccountName'; 
-                        Expression = { $S } 
+                        Name       = 'SamAccountName';
+                        Expression = { $S }
                     },
                     @{Name = 'Name'; Expression = { $adData.adObject.Name } },
                     @{Name = 'Type'; Expression = { $adData.adObject.ObjectClass } },
@@ -281,7 +282,7 @@ End {
             #region Create Excel worksheet 'GroupManagers'
             $GroupManagersToExport = foreach ($S in $matrixSamAccountNames) {
                 $adData = (
-                    $ADObjectDetails | Where-Object { 
+                    $ADObjectDetails | Where-Object {
                         ($S -EQ $_.samAccountName) -and
                         ($_.adObject.ObjectClass -eq 'group')
                     }
@@ -320,11 +321,11 @@ End {
                 }
             }
             #endregion
-   
+
             if ($AccessListToExport) {
                 #region Export to Excel worksheet 'AccessList'
                 $excelParams = @{
-                    Path               = "{0} - {1}.xlsx" -f 
+                    Path               = "{0} - {1}.xlsx" -f
                     $logFile, $matrix.MatrixFileName
                     AutoSize           = $true
                     WorksheetName      = 'AccessList'
@@ -332,40 +333,40 @@ End {
                     FreezeTopRow       = $true
                     NoNumberConversion = '*'
                 }
-                   
+
                 $M = "Export $($AccessListToExport.Count) AD objects to Excel file '$($excelParams.Path)' worksheet '$($excelParams.WorksheetName)'"
                 Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
-   
+
                 $AccessListToExport | Export-Excel @excelParams
                 #endregion
 
                 #region Export to Excel worksheet 'GroupManagers'
                 if ($GroupManagersToExport) {
                     $excelParams.WorksheetName = $excelParams.TableName = 'GroupManagers'
-                    
+
                     $M = "Export $($GroupManagersToExport.Count) AD objects to Excel file '$($excelParams.Path)' worksheet '$($excelParams.WorksheetName)'"
                     Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
-                    
+
                     $GroupManagersToExport | Export-Excel @excelParams
                 }
                 #endregion
-                   
+
                 #region Send mail to user
                 $uniqueUserCount = (
                     @(($AccessListToExport.Where( { $_.Type -eq 'user' })).samAccountName) +
-                    @(($AccessListToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) | 
+                    @(($AccessListToExport.Where( { $_.MemberSamAccountName })).MemberSamAccountName) |
                     Sort-Object -Unique | Where-Object { $_ }
                 ).Count
-   
+
                 $uniqueGroupCount = ($AccessListToExport.Where( { $_.Type -eq 'group' }) | Select-Object Name -Unique).Count
-   
+
                 $M = "Send mail with $uniqueUserCount unique user accounts and $uniqueGroupCount unique groups"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-   
+
                 $mailParams = @{
                     To          = $matrix.MatrixResponsible.Split(',')
                     Bcc         = $ScriptAdmin
-                    Subject     = "{0}, {1} users, {2} groups" -f 
+                    Subject     = "{0}, {1} users, {2} groups" -f
                     $matrix.MatrixFileName, $uniqueUserCount, $uniqueGroupCount
                     Attachments = $excelParams.Path
                     Message     =
@@ -374,11 +375,11 @@ End {
                        <p>Managing folder access is not always easy. People are joining and leaving the company, moving departments, changing jobs, ... . To facilitate this task we created the 'Permission matrix' script, an automated way to set permissions on files and folders that are shared with colleagues. This allows you to easily manage folder access by filling in an Excel worksheet containing the folder names, the user groups and the corresponding read or write permissions. </p>
 
                        <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid.</p>
-                       
+
                        <p>In case something needs to be updated or changed, feel free to report this to us by submitting the form <b>`"Request folder/role access`"</b> on the <a href=`"$RequestTicketURL`" target=`"_blank`"><b>IT Self-service Portal</b></a>.</p>
 
                        <p>More information can be found <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Access+Matrix+and+Roles%2C+an+introduction?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a> and <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Matrix+Managers%3A+audit+reports+management?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a>.</p>
-   
+
                        <table id=`"matrixTable`">
                            <tr>
                                <th id=`"matrixTitle`" colspan=`"2`"><a href=""$($matrix.MatrixFilePath)"">$($matrix.MatrixFileName).xlsx</a></th>
@@ -400,7 +401,7 @@ End {
                                <td>$($matrix.MatrixResponsible -join ', ')</td>
                            </tr>
                        </table>
-   
+
                        <p>Folder access summary:</p>
                        <table id=`"matrixTable`">
                            <tr>
@@ -412,7 +413,7 @@ End {
                                <td>$uniqueGroupCount</td>
                            </tr>
                        </table>
-                           
+
                        <p><i>* Check the attachment for details</i></p>"
                     LogFolder   = $LogParams.LogFolder
                     Header      = $ScriptName
@@ -424,7 +425,7 @@ End {
                 if ($MailBcc) {
                     $mailParams.Bcc += $MailBcc
                 }
-                
+
                 Send-MailHC @mailParams
                 #endregion
             }
