@@ -21,7 +21,7 @@ BeforeAll {
 }
 Describe 'the mandatory parameters are' {
     It '<_>' -ForEach @('Path') {
-        (Get-Command $testScript).Parameters[$_].Attributes.Mandatory | 
+        (Get-Command $testScript).Parameters[$_].Attributes.Mandatory |
         Should -BeTrue
     }
 }
@@ -30,13 +30,13 @@ Describe 'a terminating error is thrown when' {
         It 'is not found' {
             $testNewParams = $testParams.Clone()
             $testNewParams.Path = 'notExisting'
-            { .$testScript @testNewParams } | 
+            { .$testScript @testNewParams } |
             Should -Throw -ExpectedMessage "File path 'notExisting' not found"
         }
         It 'does not have the extension .xlsx' {
             $testNewParams = $testParams.Clone()
             $testNewParams.Path = New-Item "TestDrive:/test.txt" -ItemType File
-            { .$testScript @testNewParams } | 
+            { .$testScript @testNewParams } |
             Should -Throw -ExpectedMessage "File path '*test.txt' does not have extension '.xlsx'"
         }
     }
@@ -63,7 +63,7 @@ Describe 'a terminating error is thrown when' {
             Write-Error "Something went wrong"
         }
 
-        { .$testScript @testParams -EA SilentlyContinue } | 
+        { .$testScript @testParams -EA SilentlyContinue } |
         Should -Throw -ExpectedMessage "Error after executing the job that retrieves AD object details, no emails are sent: Something went wrong"
     }
 }
@@ -136,137 +136,137 @@ Describe 'when there is no terminating error' {
                 samAccountName = 'craig'
                 adObject       = @{
                     ObjectClass = 'user'
-                    Name        = 'Craig Daniel' 
+                    Name        = 'Craig Daniel'
                 }
                 adGroupMember  = $null
             }
             [PSCustomObject]@{
                 samAccountName = 'kirk'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'user'
-                    Name        = 'James T. Kirk' 
+                    Name        = 'James T. Kirk'
                 }
                 adGroupMember  = $null
             }
             [PSCustomObject]@{
                 samAccountName = 'picard'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'user'
-                    Name        = 'Jean Luc Picard' 
+                    Name        = 'Jean Luc Picard'
                 }
                 adGroupMember  = $null
             }
             [PSCustomObject]@{
                 samAccountName = 'group1'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'group'
-                    Name        = 'Group1' 
+                    Name        = 'Group1'
                     ManagedBy   = 'CN=ManagerGroup1,DC=contoso,DC=net'
                 }
                 adGroupMember  = @(
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Sean Connery'
-                        SamAccountName = 'connery' 
+                        SamAccountName = 'connery'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Timothy Dalton'
-                        SamAccountName = 'dalton' 
+                        SamAccountName = 'dalton'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
-                        Name           = 'Craig Daniel' 
-                        SamAccountName = 'craig' 
+                        Name           = 'Craig Daniel'
+                        SamAccountName = 'craig'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Ignored account'
-                        SamAccountName = 'ignoreMe' 
+                        SamAccountName = 'ignoreMe'
                     }
                 )
             }
             [PSCustomObject]@{
                 samAccountName = 'group2'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'group'
-                    Name        = 'Group2' 
+                    Name        = 'Group2'
                     ManagedBy   = 'CN=ManagerGroup1,DC=contoso,DC=net'
                 }
                 adGroupMember  = @(
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Chuck Norris'
-                        SamAccountName = 'cnorris' 
+                        SamAccountName = 'cnorris'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Ignored account'
-                        SamAccountName = 'ignoreMe' 
+                        SamAccountName = 'ignoreMe'
                     }
                 )
             }
             [PSCustomObject]@{
                 samAccountName = 'group3'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'group'
-                    Name        = 'Group3' 
+                    Name        = 'Group3'
                     ManagedBy   = 'CN=ManagerGroup1,DC=contoso,DC=net'
                 }
-                adGroupMember  = @{ 
+                adGroupMember  = @{
                     ObjectClass    = 'user'
                     Name           = 'Ignored account'
-                    SamAccountName = 'ignoreMe' 
+                    SamAccountName = 'ignoreMe'
                 }
             }
             [PSCustomObject]@{
                 samAccountName = 'group4'
-                adObject       = @{ 
+                adObject       = @{
                     ObjectClass = 'group'
-                    Name        = 'group4' 
+                    Name        = 'group4'
                     ManagedBy   = 'CN=ManagerGroup1,DC=contoso,DC=net'
                 }
                 adGroupMember  = @(
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'khan'
-                        SamAccountName = 'khan' 
+                        SamAccountName = 'khan'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Ignored account'
-                        SamAccountName = 'ignoreMe' 
+                        SamAccountName = 'ignoreMe'
                     }
                 )
             }
-        } -ParameterFilter { $SamAccountName }
+        } -ParameterFilter { $Type -eq 'SamAccountName' }
         Mock Get-ADObjectDetailHC {
             [PSCustomObject]@{
                 DistinguishedName = 'CN=ManagerGroup1,DC=contoso,DC=net'
-                adObject          = @{ 
+                adObject          = @{
                     ObjectClass = 'group'
-                    Name        = 'ManagerGroup1' 
+                    Name        = 'ManagerGroup1'
                 }
                 adGroupMember     = @(
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Tha Boss'
-                        SamAccountName = 'boss' 
+                        SamAccountName = 'boss'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'The Director'
-                        SamAccountName = 'director' 
+                        SamAccountName = 'director'
                     }
-                    @{ 
+                    @{
                         ObjectClass    = 'user'
                         Name           = 'Excluded user'
-                        SamAccountName = 'ignoreMe' 
+                        SamAccountName = 'ignoreMe'
                     }
                 )
             }
-        } -ParameterFilter { $DistinguishedName }
-        
+        } -ParameterFilter { $Type -eq 'DistinguishedName' }
+
         .$testScript @testParams
     }
     Context 'the matrix data exported for Cherwell is imported from worksheet' {
@@ -280,13 +280,13 @@ Describe 'when there is no terminating error' {
             $matrixWithoutResponsible.MatrixFileName | Should -Be 'Team losers'
         }
         It 'not checked for AD details and group members' {
-            Should -Not -Invoke Get-ADObjectDetailHC -Scope Describe -ParameterFilter { $SamAccountName -contains 'group4' }
+            Should -Not -Invoke Get-ADObjectDetailHC -Scope Describe -ParameterFilter { $ADObjectName -contains 'group4' }
         }
         It 'not exported to an Excel file in the log folder' {
             $testGetParams = @{
                 Path    = $testParams.LogFolder
                 Recurse = $true
-                Filter  = '*Team losers.xlsx' 
+                Filter  = '*Team losers.xlsx'
                 File    = $true
             }
             Get-ChildItem @testGetParams | Should -BeNullOrEmpty
@@ -294,46 +294,46 @@ Describe 'when there is no terminating error' {
     }
     Context 'SamAccountNames used in the Cherwell file' {
         It 'are checked for ADObjectDetails for each unique SamAccountName' {
-            foreach ($name in 
-                @( 
-                    'craig', 'drNo', 
-                    'group1', 'group2', 'group3', 
+            foreach ($name in
+                @(
+                    'craig', 'drNo',
+                    'group1', 'group2', 'group3',
                     'kirk', 'picard'
                 )
             ) {
-                Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
-                    (($SamAccountName | Where-Object { $_ -eq $name }).count -eq 1)
+                Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter {
+                    (($ADObjectName | Where-Object { $_ -eq $name }).count -eq 1)
                 }
             }
         }
         It 'accounts in ExcludedSamAccountName are ignored as group member' {
-            $ADObjectDetails.adGroupMember.SamAccountName | 
+            $ADObjectDetails.adGroupMember.SamAccountName |
             Should -Not -BeNullOrEmpty
 
-            $ADObjectDetails.adGroupMember.SamAccountName | 
+            $ADObjectDetails.adGroupMember.SamAccountName |
             Should -Not -Contain 'ignoreMe'
         }
     }
     Context 'groups that have a manager' {
         It 'are checked for ADObjectDetails for each unique DistinguishedName' {
-            Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter { 
-                ($DistinguishedName -eq 'CN=ManagerGroup1,DC=contoso,DC=net')
+            Should -Invoke Get-ADObjectDetailHC -Times 1 -Exactly -Scope Describe -ParameterFilter {
+                ($ADObjectName -eq 'CN=ManagerGroup1,DC=contoso,DC=net')
             }
         }
         It 'accounts in ExcludedSamAccountName are ignored as group member' {
-            $groupManagersAdDetails.adGroupMember.SamAccountName | 
+            $groupManagersAdDetails.adGroupMember.SamAccountName |
             Should -Not -BeNullOrEmpty
 
-            $groupManagersAdDetails.adGroupMember.SamAccountName | 
+            $groupManagersAdDetails.adGroupMember.SamAccountName |
             Should -Not -Contain 'ignoreMe'
-        } -Tag test
+        }
     }
     Context 'an Excel file is created' {
         BeforeAll {
             $testGetParams = @{
                 Path    = $testParams.LogFolder
                 Recurse = $true
-                Filter  = '*.xlsx' 
+                Filter  = '*.xlsx'
                 File    = $true
             }
             $testLogFiles = Get-ChildItem @testGetParams
@@ -349,8 +349,8 @@ Describe 'when there is no terminating error' {
                     Path          = $testLogFiles[0].FullName
                     WorksheetName = 'AccessList'
                 }
-                $testExcelFileMatrix1 = & $importExcel @testImportParams 
-                
+                $testExcelFileMatrix1 = & $importExcel @testImportParams
+
                 $testImportParams.Path = $testLogFiles[1].FullName
                 $testExcelFileMatrix2 = & $importExcel @testImportParams
             }
@@ -361,7 +361,7 @@ Describe 'when there is no terminating error' {
                 $testExcelFileMatrix1[2].SamAccountName | Should -Be 'group1'
                 $testExcelFileMatrix1[3].SamAccountName | Should -Be 'group1'
                 $testExcelFileMatrix1[4].SamAccountName | Should -Be 'group3'
-                
+
                 $testExcelFileMatrix2 | Should -HaveCount 4
                 $testExcelFileMatrix2[0].SamAccountName | Should -Be 'kirk'
                 $testExcelFileMatrix2[1].SamAccountName | Should -Be 'picard'
@@ -378,7 +378,7 @@ Describe 'when there is no terminating error' {
 
                 $testExcelFileMatrix2 | Should -HaveCount 4
                 $testExcelFileMatrix2[0].Name | Should -Be 'James T. Kirk'
-                $testExcelFileMatrix2[1].Name | Should -Be 'Jean Luc Picard' 
+                $testExcelFileMatrix2[1].Name | Should -Be 'Jean Luc Picard'
                 $testExcelFileMatrix2[2].Name | Should -Be 'Group2'
                 $testExcelFileMatrix2[3].Name | Should -Be 'Group3'
             }
@@ -398,15 +398,15 @@ Describe 'when there is no terminating error' {
             }
             It 'MemberName' {
                 $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].MemberName | 
+                $testExcelFileMatrix1[0].MemberName |
                 Should -BeNullOrEmpty
-                $testExcelFileMatrix1[1].MemberName | 
+                $testExcelFileMatrix1[1].MemberName |
                 Should -Be 'Sean Connery'
-                $testExcelFileMatrix1[2].MemberName | 
+                $testExcelFileMatrix1[2].MemberName |
                 Should -Be 'Timothy Dalton'
-                $testExcelFileMatrix1[3].MemberName | 
+                $testExcelFileMatrix1[3].MemberName |
                 Should -Be 'Craig Daniel'
-                $testExcelFileMatrix1[4].MemberName | 
+                $testExcelFileMatrix1[4].MemberName |
                 Should -BeNullOrEmpty
 
                 $testExcelFileMatrix2 | Should -HaveCount 4
@@ -417,25 +417,25 @@ Describe 'when there is no terminating error' {
             }
             It 'MemberSamAccountName' {
                 $testExcelFileMatrix1 | Should -HaveCount 5
-                $testExcelFileMatrix1[0].MemberSamAccountName | 
+                $testExcelFileMatrix1[0].MemberSamAccountName |
                 Should -BeNullOrEmpty
-                $testExcelFileMatrix1[1].MemberSamAccountName | 
+                $testExcelFileMatrix1[1].MemberSamAccountName |
                 Should -Be 'connery'
-                $testExcelFileMatrix1[2].MemberSamAccountName | 
+                $testExcelFileMatrix1[2].MemberSamAccountName |
                 Should -Be 'dalton'
-                $testExcelFileMatrix1[3].MemberSamAccountName | 
+                $testExcelFileMatrix1[3].MemberSamAccountName |
                 Should -Be 'craig'
-                $testExcelFileMatrix1[4].MemberSamAccountName | 
+                $testExcelFileMatrix1[4].MemberSamAccountName |
                 Should -BeNullOrEmpty
 
                 $testExcelFileMatrix2 | Should -HaveCount 4
-                $testExcelFileMatrix2[0].MemberSamAccountName | 
+                $testExcelFileMatrix2[0].MemberSamAccountName |
                 Should -BeNullOrEmpty
-                $testExcelFileMatrix2[1].MemberSamAccountName | 
+                $testExcelFileMatrix2[1].MemberSamAccountName |
                 Should -BeNullOrEmpty
-                $testExcelFileMatrix2[2].MemberSamAccountName | 
+                $testExcelFileMatrix2[2].MemberSamAccountName |
                 Should -Be 'cnorris'
-                $testExcelFileMatrix2[3].MemberSamAccountName | 
+                $testExcelFileMatrix2[3].MemberSamAccountName |
                 Should -BeNullOrEmpty
             }
         }
@@ -445,21 +445,21 @@ Describe 'when there is no terminating error' {
                     Path          = $testLogFiles[0].FullName
                     WorksheetName = 'GroupManagers'
                 }
-                $testExcelFileMatrix1 = & $importExcel @testImportParams 
-                
+                $testExcelFileMatrix1 = & $importExcel @testImportParams
+
                 $testImportParams.Path = $testLogFiles[1].FullName
                 $testExcelFileMatrix2 = & $importExcel @testImportParams
             }
             It 'GroupName' {
-                <# 
-                'MI6 007 agents' 
+                <#
+                'MI6 007 agents'
                 GroupName ManagerName   ManagerType ManagerMemberName
                 --------- -----------   ----------- -----------------
                 Group1    ManagerGroup1 group       Tha Boss
                 Group1    ManagerGroup1 group       The Director
                 Group3    ManagerGroup1 group       Tha Boss
                 Group3    ManagerGroup1 group       The Director
-    
+
                 'Star Trek captains'
                 GroupName ManagerName   ManagerType ManagerMemberName
                 --------- -----------   ----------- -----------------
@@ -468,7 +468,7 @@ Describe 'when there is no terminating error' {
                 Group3    ManagerGroup1 group       Tha Boss
                 Group3    ManagerGroup1 group       The Director
                 #>
-    
+
                 $testExcelFileMatrix1 | Should -HaveCount 4
                 $testExcelFileMatrix1[0].GroupName | Should -Be 'Group1'
                 $testExcelFileMatrix1[1].GroupName | Should -Be 'Group1'
@@ -482,22 +482,22 @@ Describe 'when there is no terminating error' {
                 $testExcelFileMatrix2[3].GroupName | Should -Be 'Group3'
             }
             It 'ManagerName' {
-                $testExcelFileMatrix1[0].ManagerName | 
+                $testExcelFileMatrix1[0].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix1[1].ManagerName | 
+                $testExcelFileMatrix1[1].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix1[2].ManagerName | 
+                $testExcelFileMatrix1[2].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix1[3].ManagerName | 
+                $testExcelFileMatrix1[3].ManagerName |
                 Should -Be 'ManagerGroup1'
 
-                $testExcelFileMatrix2[0].ManagerName | 
+                $testExcelFileMatrix2[0].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix2[1].ManagerName | 
+                $testExcelFileMatrix2[1].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix2[2].ManagerName | 
+                $testExcelFileMatrix2[2].ManagerName |
                 Should -Be 'ManagerGroup1'
-                $testExcelFileMatrix2[3].ManagerName | 
+                $testExcelFileMatrix2[3].ManagerName |
                 Should -Be 'ManagerGroup1'
             }
             It 'ManagerType' {
@@ -512,22 +512,22 @@ Describe 'when there is no terminating error' {
                 $testExcelFileMatrix2[3].ManagerType | Should -Be 'group'
             }
             It 'ManagerMemberName' {
-                $testExcelFileMatrix1[0].ManagerMemberName | 
+                $testExcelFileMatrix1[0].ManagerMemberName |
                 Should -Be 'Tha Boss'
-                $testExcelFileMatrix1[1].ManagerMemberName | 
+                $testExcelFileMatrix1[1].ManagerMemberName |
                 Should -Be 'The Director'
-                $testExcelFileMatrix1[2].ManagerMemberName | 
+                $testExcelFileMatrix1[2].ManagerMemberName |
                 Should -Be 'Tha Boss'
-                $testExcelFileMatrix1[3].ManagerMemberName | 
+                $testExcelFileMatrix1[3].ManagerMemberName |
                 Should -Be 'The Director'
 
-                $testExcelFileMatrix2[0].ManagerMemberName | 
+                $testExcelFileMatrix2[0].ManagerMemberName |
                 Should -Be 'Tha Boss'
-                $testExcelFileMatrix2[1].ManagerMemberName | 
+                $testExcelFileMatrix2[1].ManagerMemberName |
                 Should -Be 'The Director'
-                $testExcelFileMatrix2[2].ManagerMemberName | 
+                $testExcelFileMatrix2[2].ManagerMemberName |
                 Should -Be 'Tha Boss'
-                $testExcelFileMatrix2[3].ManagerMemberName | 
+                $testExcelFileMatrix2[3].ManagerMemberName |
                 Should -Be 'The Director'
             }
         }

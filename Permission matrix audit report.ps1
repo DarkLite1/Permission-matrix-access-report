@@ -137,8 +137,8 @@ Process {
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
         $getADObjectParams = @{
-            SamAccountName   = $samAccountNames
-            ADObjectProperty = 'ManagedBy'
+            ADObjectName = $samAccountNames
+            Type         = 'SamAccountName'
         }
         $ADObjectDetails = Get-ADObjectDetailHC @getADObjectParams
         #endregion
@@ -152,7 +152,8 @@ Process {
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
             $getADObjectParams = @{
-                DistinguishedName = $groupManagers
+                ADObjectName = $groupManagers
+                Type         = 'DistinguishedName'
             }
             $groupManagersAdDetails = Get-ADObjectDetailHC @getADObjectParams
         }
