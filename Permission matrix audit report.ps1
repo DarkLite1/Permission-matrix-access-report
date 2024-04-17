@@ -373,13 +373,21 @@ End {
                     Message     =
                     "$htmlStyle
                        <p>Dear matrix responsible</p>
+
+                       <p>You received this message because you were designated as manager of an access role matrix.</p>
+
                        <p>Managing folder access is not always easy. People are joining and leaving the company, moving departments, changing jobs, ... . To facilitate this task we created the 'Permission matrix' script, an automated way to set permissions on files and folders that are shared with colleagues. This allows you to easily manage folder access by filling in an Excel worksheet containing the folder names, the user groups and the corresponding read or write permissions. </p>
 
                        <p>From experience we know that from time to time a short review of these permissions might be required. Please have a look at the details below and the file in attachment to see if they are still valid.</p>
 
                        <p>In case something needs to be updated or changed, feel free to report this to us by submitting the form <b>`"Request folder/role access`"</b> on the <a href=`"$RequestTicketURL`" target=`"_blank`"><b>IT Self-service Portal</b></a>.</p>
 
-                       <p>More information can be found <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Access+Matrix+and+Roles%2C+an+introduction?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a> and <a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Matrix+Managers%3A+audit+reports+management?src=contextnavpagetreemode`" target=`"_blank`"><b>here</b></a>.</p>
+                        <p>More information can be found in the following documents (click on the links below):</p>
+                        <ul>
+                            <li><a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Access+Matrix+and+Roles%2C+an+introduction`" target=`"_blank`">Access matrix and roles: an introduction</a><br>(What is an Access Matrix? Why Roles?)</li>
+                            <li><a href=`"https://confluence.heidelbergcement.com/display/BNL/BNL+Help%3A+Matrix+Managers%3A+audit+reports+management`" target=`"_blank`">-	Matrix managers: audit reports management</a><br>(I have received a `"Permission matrix audit report`", what should I do?)</li>
+
+                        </ul>
 
                        <table id=`"matrixTable`">
                            <tr>
